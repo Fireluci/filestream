@@ -7,7 +7,6 @@
     <title>🔆彡⟨ HEROFLiX ⟩彡🔆</title>
 
     <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
-    <link rel="shortcut icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 
     <link rel="stylesheet" href="https://unpkg.com/sheryjs/dist/Shery.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/style.css">
@@ -20,21 +19,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* 10s buttons */
+        .player {
+            width: 100% !important;
+            max-height: 65vh !important;
+            object-fit: contain !important;
+            background-color: #000;
+        }
+        /* Skip buttons */
         .skip-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             width: 55px;
-            opacity: 1;
             cursor: pointer;
             z-index: 20;
         }
-
         .left-skip {
             left: 6%;
         }
-
         .right-skip {
             right: 6%;
         }
@@ -48,7 +50,29 @@
             width: 95px;
             cursor: pointer;
             z-index: 25;
-            display: none;
+        }
+
+        /* Bottom Buttons (always visible) */
+        .downloadBtn {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            z-index: 9999 !important;
+        }
+        .downloadBtn button {
+            background: rgba(0,0,0,0.75);
+            color: white;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .downloadBtn img {
+            height: 24px;
         }
     </style>
 </head>
@@ -67,16 +91,15 @@
         <div class="inner">
             <div class="main" id="main">
 
-                <!-- 10s Skip Buttons -->
+                <!-- Skip Buttons -->
                 <img class="skip-btn left-skip" src="https://i.ibb.co/PZ5Zt679/backward.png" onclick="skipBack()" />
                 <img class="skip-btn right-skip" src="https://i.ibb.co/Lz8BND8k/forward.png" onclick="skipForward()" />
 
-                <!-- Play Overlay Icon -->
+                <!-- Play Overlay -->
                 <img id="playOverlay" src="https://i.ibb.co/XfWwZRh5/play.png" onclick="togglePlay()" />
 
-                <!-- Video Player -->
-                <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline controls width="100%">
-                </video>
+                <!-- Video -->
+                <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline width="100%"></video>
 
                 <div class="file-name">
                     <p style="display: inline;" id="myDiv">[{{file_size}}] {{file_name}}</p>
@@ -84,19 +107,19 @@
 
                 <div class="downloadBtn">
                     <button class="magnet" onclick="streamDownload()">
-                        <img style="height: 30px;" src="https://i.ibb.co/b5hK74D1/download.png" alt="">download video
+                        <img src="https://i.ibb.co/b5hK74D1/download.png" alt="">download video
                     </button>
                     <button class="magnet" onclick="copyStreamLink()">
                         <img src="https://i.ibb.co/60tBXLMp/copy-link.png" alt="">copy link
                     </button>
                     <button class="magnet" onclick="vlc_player()">
-                        <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="">watch in VLC PLAYER
+                        <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="">VLC PLAYER
                     </button>
                     <button class="magnet" onclick="mx_player()">
-                        <img src="https://i.ibb.co/41WvtQ3/mx.png" alt="">watch in MX PLAYER
+                        <img src="https://i.ibb.co/41WvtQ3/mx.png" alt="">MX PLAYER
                     </button>
                     <button class="magnet" onclick="n_player()">
-                        <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" alt="">watch in nPlayer
+                        <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" alt="">nPlayer
                     </button>
                 </div>
 
@@ -117,60 +140,18 @@
 </body>
 
 <!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.155.0/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/automat/controlkit.js@master/bin/controlKit.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sheryjs/dist/Shery.js"></script>
-<script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
-<script src="https://proavipatil.github.io/data/fs/src/script.js"></script>
-
 <script>
     const video = document.getElementById("player");
     const overlay = document.getElementById("playOverlay");
-    const leftSkip = document.querySelector(".left-skip");
-    const rightSkip = document.querySelector(".right-skip");
-    const actionButtons = document.querySelector(".downloadBtn");
 
-    let hideTimeout;
+    function togglePlay() { video.paused ? video.play() : video.pause(); }
+    video.onclick = togglePlay;
 
-    function showControls() {
-        overlay.style.display = video.paused ? "block" : "none";
-        leftSkip.style.display = "block";
-        rightSkip.style.display = "block";
-        actionButtons.style.display = "flex";
-    }
+    video.onplay = () => overlay.style.display = "none";
+    video.onpause = () => overlay.style.display = "block";
 
-    function hideControls() {
-        if (!video.paused) {
-            overlay.style.display = "none";
-            leftSkip.style.display = "none";
-            rightSkip.style.display = "none";
-            actionButtons.style.display = "none";
-        }
-    }
-
-    function resetHideTimer() {
-        showControls();
-        clearTimeout(hideTimeout);
-        if (!video.paused) {
-            hideTimeout = setTimeout(hideControls, 5000);
-        }
-    }
-
-    video.onplay = () => resetHideTimer();
-    video.onpause = () => {
-        showControls();
-        clearTimeout(hideTimeout);
-    };
-
-    document.addEventListener("click", resetHideTimer);
-    document.addEventListener("mousemove", resetHideTimer);
-    document.addEventListener("touchstart", resetHideTimer);
-
-    function togglePlay() { video.paused ? video.play() : video.pause(); resetHideTimer(); }
-    function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); resetHideTimer(); }
-    function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); resetHideTimer(); }
+    function skipBack() { video.currentTime -= 10; }
+    function skipForward() { video.currentTime += 10; }
 
     function streamDownload() {
         const fileUrl = window.location.href.replace("stream_", "download_");
