@@ -16,11 +16,9 @@ class LANG(object):
 <i><b> ʀᴇᴘᴏʀᴛ ʙᴜɢs ᴛᴏ <a href='https://telegram.me/AvishkarPatil'>ᴅᴇᴠᴇʟᴏᴘᴇʀ</a></b></i>"""
 
     ABOUT_TEXT = """
-<b>⚜ ᴍʏ ɴᴀᴍᴇ : {}</b>\n
-<b>✦ ᴠᴇʀsɪᴏɴ : {}</b>
-<b>✦ ᴜᴘᴅᴀᴛᴇᴅ ᴏɴ : 06-January-2024</b>
-<b>✦ ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://telegram.me/AvishkarPatil'>Avishkar Patil</a></b>\n
-"""
+    <B>🔆 [ DOWNLOAD / STREAM ] 🔆
+⌬──━━━━━━━━━━━━━━──⌬
+♻ With This Bot You Can Get Fast Download / Stream Links To Any Telegram Files!</b>"""
 
     STREAM_TEXT = """
 <b>[ DOWNLOAD / STREAM ]
@@ -42,30 +40,12 @@ class LANG(object):
 
 
 class BUTTON(object):
+
     START_BUTTONS = InlineKeyboardMarkup(
-        [[
-            InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
-            InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close')
-        ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
-        ]
-    )
-    HELP_BUTTONS = InlineKeyboardMarkup(
-        [[
-            InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='home'),
-            InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
-            InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close'),
-        ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
-        ]
-    )
-    ABOUT_BUTTONS = InlineKeyboardMarkup(
-        [[
-            InlineKeyboardButton('ʜᴏᴍᴇ', callback_data='home'),
-            InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close'),
-        ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
+        [
+            [
+                InlineKeyboardButton("📢 Updates", url=Telegram.UPDATES_CHANNEL),
+                InlineKeyboardButton("👤 Admin", url="https://telegram.me/mrkrazybot")
+            ]
         ]
     )
