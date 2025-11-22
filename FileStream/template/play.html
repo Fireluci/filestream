@@ -7,8 +7,6 @@
     <title>🔆彡⟨ HEROFLiX ⟩彡🔆</title>
 
     <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
-    <link rel="shortcut icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/plyr.css">
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -19,21 +17,10 @@ body {
     font-family: 'Josefin Sans', sans-serif;
     user-select: none;
 }
-nav {
-    padding: 15px 10px;
-    text-align: center;
-}
-nav h3 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #ffcc00;
-}
-.file-name {
-    text-align: center;
-    margin-top: 20px;
-    font-weight: 600;
-    font-size: 15px;
-}
+nav { padding: 15px 10px; text-align: center; }
+nav h3 { font-size: 28px; font-weight: 700; color: #ffcc00; }
+.file-name { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; }
+
 .downloadBtn {
     margin-top: 25px;
     display: flex;
@@ -64,68 +51,90 @@ footer {
     font-size: 13px;
     color: #999;
 }
-</style>
 
+/* 🔘 Skip Button Style */
+.skip-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    opacity: 0.9;
+    transition: 0.2s;
+}
+.skip-btn:hover { opacity: 1; transform: translateY(-50%) scale(1.08); }
+.left-skip { left: 10%; }
+.right-skip { right: 10%; }
+
+/* ▶ Play Button Overlay */
+#playOverlay img {
+    filter: drop-shadow(0px 0px 6px black);
+}
+</style>
 </head>
 
 <body>
 
-    <nav>
-        <h3>🔆彡⟨ HEROFLiX ⟩彡🔆</h3>
-    </nav>
+<nav><h3>🔆彡⟨ HEROFLiX ⟩彡🔆</h3></nav>
 
-    <div style="width: 100%; max-width:900px; margin:auto;">
+<div style="width: 100%; max-width:900px; margin:auto;">
 
-        <!-- ▶ VIDEO WITH ONLY PLAY ICON -->
-        <div style="position: relative;">
-            <video id="player" class="player"
-                src="{{file_url}}"
-                type="video/mp4" playsinline controls width="100%">
-            </video>
+    <!-- 🎥 VIDEO + BUTTON OVERLAY -->
+    <div style="position: relative;">
+        <video id="player" class="player"
+            src="{{file_url}}"
+            poster="https://i.ibb.co/7xZjKFs/image.png"
+            type="video/mp4" playsinline controls width="100%">
+        </video>
 
-            <!-- 🔘 PLAY ICON -->
-            <div id="playOverlay" onclick="document.getElementById('player').play();"
-                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
-                <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" width="90" style="opacity:0.9;">
-            </div>
+        <!-- ▶ Play Button -->
+        <div id="playOverlay" onclick="document.getElementById('player').play();"
+            style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
+            <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" width="90" style="opacity:0.9;">
         </div>
 
-        <div class="file-name">[{{file_size}}] {{file_name}}</div>
-
-        <div class="downloadBtn">
-            <button onclick="streamDownload()">
-                <img style="height: 20px;" src="https://i.ibb.co/RjzYttX/dl.png"> Download
-            </button>
-            <button onclick="copyStreamLink()">
-                <img style="height: 20px;" src="https://i.ibb.co/CM4Y586/link.png"> Copy Link
-            </button>
-            <button onclick="vlc_player()">
-                <img style="height: 20px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
-            </button>
-            <button onclick="mx_player()">
-                <img style="height: 20px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
-            </button>
-            <button onclick="n_player()">
-                <img style="height: 20px;" src="https://i.ibb.co/Hd2dS4t/nPlayer.png"> nPlayer
-            </button>
-        </div>
-
+        <!-- ⏪ Back 10s -->
+        <img class="skip-btn left-skip" src="https://cdn-icons-png.flaticon.com/512/0/375.png" width="50" onclick="skipBack();">
+        <!-- ⏩ Forward 10s -->
+        <img class="skip-btn right-skip" src="https://cdn-icons-png.flaticon.com/512/26/26139.png" width="50" onclick="skipForward();">
     </div>
 
-    <footer>
-        Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆
-    </footer>
+    <div class="file-name">[{{file_size}}] {{file_name}}</div>
 
-<!-- 🎯 Hide play icon when video starts -->
+    <div class="downloadBtn">
+        <button onclick="streamDownload()"><img style="height: 20px;" src="https://i.ibb.co/RjzYttX/dl.png"> Download</button>
+        <button onclick="copyStreamLink()"><img style="height: 20px;" src="https://i.ibb.co/CM4Y586/link.png"> Copy Link</button>
+        <button onclick="vlc_player()"><img style="height: 20px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player</button>
+        <button onclick="mx_player()"><img style="height: 20px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player</button>
+        <button onclick="n_player()"><img style="height: 20px;" src="https://i.ibb.co/Hd2dS4t/nPlayer.png"> nPlayer</button>
+    </div>
+
+</div>
+
+<footer>Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆</footer>
+
+<!-- 🎯 Hide play icon on play -->
 <script>
-    const v=document.getElementById("player"); 
-    const o=document.getElementById("playOverlay");
-    v.onplay=()=>o.style.display="none"; 
-    v.onpause=()=>o.style.display="block";
+const video=document.getElementById("player"); 
+const overlay=document.getElementById("playOverlay");
+video.onplay=()=>overlay.style.display="none";
+video.onpause=()=>overlay.style.display="block";
+
+/* ⏪ 10s Back */
+function skipBack(){ video.currentTime -= 10; }
+/* ⏩ 10s Forward */
+function skipForward(){ video.currentTime += 10; }
+</script>
+
+<!-- ⚙️ Action Buttons -->
+<script>
+function streamDownload(){ window.open("{{file_url}}", "_blank"); }
+function copyStreamLink(){ navigator.clipboard.writeText(window.location.href); alert("🔗 Link Copied!"); }
+function vlc_player(){ window.location.href = `vlc://{{file_url}}`; }
+function mx_player(){ window.location.href = `intent:{{file_url}}#Intent;package=com.mxtech.videoplayer.ad;S.title={{file_name}};end`; }
+function n_player(){ window.location.href = `nplayer-https://{{file_url}}`; }
 </script>
 
 <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
-<script src="https://proavipatil.github.io/data/fs/src/script.js"></script>
 
 </body>
 </html>
