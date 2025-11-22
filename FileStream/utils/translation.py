@@ -7,6 +7,7 @@ class LANG(object):
     <B>🔆 [ DOWNLOAD / STREAM ] 🔆
 ⌬──━━━━━━━━━━━━━━──⌬
 ♻ With This Bot You Can Get Fast Download / Stream Links To Any Telegram Files!</b>"""
+    
     HELP_TEXT = """
 <b>- ᴀᴅᴅ ᴍᴇ ᴀs ᴀɴ ᴀᴅᴍɪɴ ᴏɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ</b>
 <b>- sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴅᴏᴄᴜᴍᴇɴᴛ ᴏʀ ᴍᴇᴅɪᴀ</b>
@@ -47,7 +48,7 @@ class BUTTON(object):
             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
             InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close')
         ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=f'https://telegram/{Telegram.UPDATES_CHANNEL}')]
+            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
         ]
     )
     HELP_BUTTONS = InlineKeyboardMarkup(
@@ -56,7 +57,7 @@ class BUTTON(object):
             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
             InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close'),
         ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=f'https://telegram/{Telegram.UPDATES_CHANNEL}')]
+            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
         ]
     )
     ABOUT_BUTTONS = InlineKeyboardMarkup(
@@ -65,6 +66,6 @@ class BUTTON(object):
             InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close'),
         ],
-            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=f'https://telegram/{Telegram.UPDATES_CHANNEL}')]
+            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=Telegram.UPDATES_CHANNEL)]
         ]
     )
