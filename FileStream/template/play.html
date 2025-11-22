@@ -44,12 +44,10 @@
                 <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline controls
                     width="100%"></video>
                 <div class="player"></div>
-                <div class="file-name">
-                    <h4 style="display: inline;">File Name: </h4>
-                    <p style="display: inline;" id="myDiv">{{file_name}}</p><br>
-                    <h4 style="display: inline;">File Size: </h4>
-                    <p style="display: inline;">{{file_size}}</p>
-                </div>
+<div class="file-name">
+    <p style="display: inline;" id="myDiv">[{{file_size}}] {{file_name}}</p>
+</div>
+
                 <div class="downloadBtn">
                     <button class="magnet" onclick="streamDownload()">
                         <img style="height: 30px;" src="https://i.ibb.co/RjzYttX/dl.png" alt="">download video
