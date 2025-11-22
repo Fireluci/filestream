@@ -7,156 +7,156 @@
 <title>🔆彡⟨ HEROFLiX ⟩彡🔆</title>
 
 <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
+<script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/plyr.css">
 
 <style>
-    body {
-        background: black;
-        color: white;
-        font-family: 'Josefin Sans', sans-serif;
-        user-select: none;
-        margin: 0;
-    }
-    nav { text-align: center; padding: 15px 0; font-size: 27px; color: #ffcc00; font-weight: 700; }
+body {
+    background: #0d0d0d;
+    color: white;
+    font-family: 'Josefin Sans', sans-serif;
+    user-select: none;
+}
+nav { padding: 15px 10px; text-align: center; }
+nav h3 { font-size: 28px; font-weight: 700; color: #ffcc00; }
 
-    .file-name {
-        text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px;
-    }
+.file-name { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; }
 
-    .downloadBtn {
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 25px;
-    }
-    .downloadBtn button {
-        background: #222; border: 1px solid #444; padding: 10px 15px; border-radius: 8px;
-        font-size: 13px; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 7px;
-        cursor: pointer;
-    }
-    .downloadBtn button:hover {
-        background: #ffcc00; color: #000; border-color: #ffcc00;
-    }
+.downloadBtn {
+    margin-top: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+.downloadBtn button {
+    background: #222;
+    border: 1px solid #444;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.downloadBtn button:hover {
+    background: #ffcc00;
+    color: #000;
+    border-color: #ffcc00;
+}
+footer {
+    padding: 25px;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+}
 
-    footer {
-        padding: 25px; text-align: center; font-size: 13px; color: #999;
-    }
+/* Skip Buttons */
+.skip-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 10px;
+    user-select: none;
+}
+.skip-btn:hover { transform: translateY(-50%) scale(1.15); }
 
-    /* Skip Buttons */
-    .skip-btn {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        cursor: pointer; padding: 10px; user-select: none;
-    }
-    .skip-btn:active { transform: translateY(-50%) scale(1.15); }
-    .left-skip { left: 20%; }
-    .right-skip { right: 20%; }
+.left-skip { left: 20%; }
+.right-skip { right: 20%; }
 
-    #playOverlay img { cursor: pointer; }
+#playOverlay img { transition: opacity .2s; }
 </style>
 </head>
 
 <body>
 
-<nav>🔆彡⟨ HEROFLiX ⟩彡🔆</nav>
+<nav><h3>🔆彡⟨ HEROFLiX ⟩彡🔆</h3></nav>
 
 <div style="width:100%; max-width:900px; margin:auto;">
 
+<!-- VIDEO -->
 <div style="position: relative;">
-    <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline controls width="100%"></video>
+    <video id="player" class="player"
+        src="{{file_url}}" type="video/mp4"
+        playsinline controls width="100%">
+    </video>
 
-    <!-- Play Button -->
-    <div id="playOverlay" onclick="video.play();"
-         style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
-        <img src="https://i.ibb.co/XfWwZRh5/play.png" width="100">
+    <!-- PLAY -->
+    <div id="playOverlay" onclick="document.getElementById('player').play();"
+        style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
+        <img src="/mnt/data/beaf9c3f-9ef3-444a-b4ac-95bcdb6c7357.png" width="100">
     </div>
 
-    <!-- Back 10s -->
+    <!-- BACK 10s -->
     <div class="skip-btn left-skip" onclick="skipBack()">
-        <img src="https://i.ibb.co/PZ5Zt679/backward.png" width="50">
+        <img src="/mnt/data/0b39ca49-51d1-4057-9839-a6998538feab.png" width="50">
     </div>
 
-    <!-- Forward 10s -->
+    <!-- FORWARD 10s -->
     <div class="skip-btn right-skip" onclick="skipForward()">
-        <img src="https://i.ibb.co/Lz8BND8k/forward.png" width="50">
+        <img src="/mnt/data/ab13e10c-941b-43ca-9f48-4e2d057cf9dd.png" width="50">
     </div>
 </div>
 
 <div class="file-name">[{{file_size}}] {{file_name}}</div>
 
+<!-- BUTTONS -->
 <div class="downloadBtn">
     <button onclick="streamDownload()">
-        <img style="height:22px;" src="https://i.ibb.co/b5hK74D1/download.png"> Download
+        <img style="height:22px;" src="/mnt/data/095713ab-9ac9-4b51-9c15-565d9b31e06c.png"> Download
     </button>
 
     <button onclick="copyStreamLink()">
-        <img style="height:22px;" src="https://i.ibb.co/60tBXLMp/copy-link.png"> Copy Link
+        <img style="height:22px;" src="/mnt/data/2cafc345-5694-408b-87f3-44338503787e.png"> Copy Link
     </button>
 
-    <button onclick="vlc_player()">VLC Player</button>
-    <button onclick="mx_player()">MX Player</button>
-    <button onclick="n_player()">nPlayer</button>
+    <button onclick="vlc_player()">
+        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
+    </button>
+
+    <button onclick="mx_player()">
+        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
+    </button>
+
+    <button onclick="n_player()">
+        <img style="height:22px;" src="https://i.ibb.co/Hd2dS4t/nPlayer.png"> nPlayer
+    </button>
 </div>
 
 </div>
 
-<footer>© 2024 🔆彡⟨ HEROFLiX ⟩彡🔆</footer>
-
+<footer>Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆</footer>
 
 <script>
-const video = document.getElementById("player");
-const overlay = document.getElementById("playOverlay");
-const leftSkip = document.querySelector(".left-skip");
-const rightSkip = document.querySelector(".right-skip");
-const actionButtons = document.querySelector(".downloadBtn");
+const video=document.getElementById("player");
+const overlay=document.getElementById("playOverlay");
+video.onplay=()=>overlay.style.display="none";
+video.onpause=()=>overlay.style.display="block";
 
-let hideTimeout;
+/* SKIP */
+function skipBack(){ video.currentTime -= 10; }
+function skipForward(){ video.currentTime += 10; }
 
-// Show all controls instantly
-function showControls() {
-    overlay.style.display = video.paused ? "block" : "none";
-    leftSkip.style.display = "block";
-    rightSkip.style.display = "block";
-    actionButtons.style.display = "flex";
+/* DOWNLOAD */
+function streamDownload(){
+    let url = window.location.href;
+    url = url.replace("/view/", "/dl/").replace("?__test__", "");
+    window.open(url, "_blank");
 }
 
-// Hide everything instantly
-function hideControls() {
-    overlay.style.display = "none";
-    leftSkip.style.display = "none";
-    rightSkip.style.display = "none";
-    actionButtons.style.display = "none";
-}
-
-// Reset 5s hide timer
-function resetHideTimer() {
-    showControls();
-    clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(hideControls, 5000);
-}
-
-// Events
-video.onplay = () => resetHideTimer();
-video.onpause = () => resetHideTimer();
-
-// Tap/click anywhere to show again
-document.addEventListener("click", resetHideTimer);
-document.addEventListener("mousemove", resetHideTimer);
-document.addEventListener("touchstart", resetHideTimer);
-
-// Skip Controls
-function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); }
-function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); }
-
-// Download
-function streamDownload() { window.open("{{file_url}}", "_blank"); }
-
-// Copy Link
-function copyStreamLink() {
+/* COPY */
+function copyStreamLink(){
     navigator.clipboard.writeText(window.location.href);
     alert("🔗 Link Copied!");
 }
 
-// External Players
-function vlc_player() { window.location.href = `vlc://{{file_url}}`; }
-function mx_player() { window.location.href = `intent:{{file_url}}#Intent;package=com.mxtech.videoplayer.ad;S.title={{file_name}};end`; }
-function n_player() { window.location.href = `nplayer-https://{{file_url}}`; }
+/* EXTERNAL PLAYERS */
+function vlc_player(){ window.location.href = `vlc://{{file_url}}`; }
+function mx_player(){ window.location.href = `intent:{{file_url}}#Intent;package=com.mxtech.videoplayer.ad;S.title={{file_name}};end`; }
+function n_player(){ window.location.href = `nplayer-https://{{file_url}}`; }
 </script>
 
 <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
