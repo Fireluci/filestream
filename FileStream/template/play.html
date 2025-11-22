@@ -9,94 +9,123 @@
     <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
     <link rel="shortcut icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 
-    <link rel="stylesheet" href="https://unpkg.com/sheryjs/dist/Shery.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/plyr.css">
-
     <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body {
+    background: #0d0d0d;
+    color: white;
+    font-family: 'Josefin Sans', sans-serif;
+    user-select: none;
+}
+nav {
+    padding: 15px 10px;
+    text-align: center;
+}
+nav h3 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffcc00;
+}
+.file-name {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: 600;
+    font-size: 15px;
+}
+.downloadBtn {
+    margin-top: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+.downloadBtn button {
+    background: #222;
+    border: 1px solid #444;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.downloadBtn button:hover {
+    background: #ffcc00;
+    color: #000;
+    border-color: #ffcc00;
+}
+footer {
+    padding: 25px;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+}
+</style>
+
 </head>
 
 <body>
 
     <nav>
-        <div class="nleft">
-            <a href="#">
-                <h3 id="heading" style="z-index: 100;" class="magnet title">🔆彡⟨ HEROFLiX ⟩彡🔆</h3>
-            </a>
-        </div>
+        <h3>🔆彡⟨ HEROFLiX ⟩彡🔆</h3>
     </nav>
 
-    <div class="outer">
-        <div class="inner">
-            <div class="main" id="main">
+    <div style="width: 100%; max-width:900px; margin:auto;">
 
-                <!-- Video + Play Button Overlay -->
-                <div style="position: relative; width: 100%; display: inline-block;">
-                    <video id="player" class="player" 
-                        src="{{file_url}}" 
-                        poster="https://te.legra.ph/file/d6a23f16e002e86381656.jpg"
-                        type="video/mp4" playsinline controls width="100%">
-                    </video>
+        <!-- ▶ VIDEO WITH ONLY PLAY ICON -->
+        <div style="position: relative;">
+            <video id="player" class="player"
+                src="{{file_url}}"
+                type="video/mp4" playsinline controls width="100%">
+            </video>
 
-                    <!-- Play Overlay -->
-                    <div id="playOverlay" onclick="document.getElementById('player').play();" 
-                        style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
-                        <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" width="90" height="90" style="opacity:0.85;">
-                    </div>
-                </div>
-
-                <div class="file-name">
-                    <p id="myDiv">[{{file_size}}] {{file_name}}</p>
-                </div>
-
-                <div class="downloadBtn">
-                    <button class="magnet" onclick="streamDownload()">
-                        <img style="height: 30px;" src="https://i.ibb.co/RjzYttX/dl.png" alt="">download video
-                    </button>
-                    <button class="magnet" onclick="copyStreamLink()">
-                        <img src="https://i.ibb.co/CM4Y586/link.png" alt="Copy Link">copy link
-                    </button>
-                    <button class="magnet" onclick="vlc_player()">
-                        <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="">watch in VLC PLAYER
-                    </button>
-                    <button class="magnet" onclick="mx_player()">
-                        <img src="https://i.ibb.co/41WvtQ3/mx.png" alt="">watch in MX PLAYER
-                    </button>
-                    <button class="magnet" onclick="n_player()">
-                        <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" alt="">watch in nPlayer
-                    </button>
-                </div>
-
+            <!-- 🔘 PLAY ICON -->
+            <div id="playOverlay" onclick="document.getElementById('player').play();"
+                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" width="90" style="opacity:0.9;">
             </div>
         </div>
 
-        <footer style="margin-top: 50px;">
-            <center>
-                <div class="copyright">
-                    <h5 class="text-center">
-                        Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆. All Rights Reserved.
-                    </h5>
-                </div>
-            </center>
-        </footer>
+        <div class="file-name">[{{file_size}}] {{file_name}}</div>
+
+        <div class="downloadBtn">
+            <button onclick="streamDownload()">
+                <img style="height: 20px;" src="https://i.ibb.co/RjzYttX/dl.png"> Download
+            </button>
+            <button onclick="copyStreamLink()">
+                <img style="height: 20px;" src="https://i.ibb.co/CM4Y586/link.png"> Copy Link
+            </button>
+            <button onclick="vlc_player()">
+                <img style="height: 20px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
+            </button>
+            <button onclick="mx_player()">
+                <img style="height: 20px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
+            </button>
+            <button onclick="n_player()">
+                <img style="height: 20px;" src="https://i.ibb.co/Hd2dS4t/nPlayer.png"> nPlayer
+            </button>
+        </div>
+
     </div>
 
-</body>
+    <footer>
+        Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆
+    </footer>
 
-<!-- Hide play icon after clicking -->
+<!-- 🎯 Hide play icon when video starts -->
 <script>
-    const video = document.getElementById("player");
-    const overlay = document.getElementById("playOverlay");
-    video.onplay = () => overlay.style.display = "none";
-    video.onpause = () => overlay.style.display = "block";
+    const v=document.getElementById("player"); 
+    const o=document.getElementById("playOverlay");
+    v.onplay=()=>o.style.display="none"; 
+    v.onpause=()=>o.style.display="block";
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.155.0/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/automat/controlkit.js@master/bin/controlKit.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sheryjs/dist/Shery.js"></script>
 <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
 <script src="https://proavipatil.github.io/data/fs/src/script.js"></script>
 
+</body>
 </html>
