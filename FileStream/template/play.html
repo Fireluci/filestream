@@ -18,6 +18,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;700&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ⭐ FIX BUTTONS & ALIGNMENT -->
+    <style>
+        .downloadBtn {
+            display: flex !important;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .downloadBtn button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        .file-name {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
@@ -33,10 +60,24 @@
     <div class="outer">
         <div class="inner">
             <div class="main" id="main">
-                <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline controls width="100%"></video>
+
+                <!-- 🎞️ VIDEO WITH POSTER & PLAY ICON -->
+                <div style="position: relative; width: 100%; display: inline-block;">
+                    <video id="player" class="player"
+                        src="{{file_url}}"
+                        poster="https://te.legra.ph/file/d6a23f16e002e86381656.jpg"
+                        type="video/mp4" playsinline controls width="100%">
+                    </video>
+
+                    <!-- ▶ Play Overlay -->
+                    <div id="playOverlay" onclick="document.getElementById('player').play();"
+                        style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" width="90" height="90" style="opacity:0.85;">
+                    </div>
+                </div>
 
                 <div class="file-name">
-                    <p style="display: inline;" id="myDiv">[{{file_size}}] {{file_name}}</p>
+                    <p id="myDiv">[{{file_size}}] {{file_name}}</p>
                 </div>
 
                 <div class="downloadBtn">
@@ -60,7 +101,7 @@
             </div>
         </div>
 
-        <footer>
+        <footer style="margin-top: 50px;">
             <center>
                 <div class="copyright">
                     <h5 class="text-center">
@@ -72,6 +113,14 @@
     </div>
 
 </body>
+
+<!-- 🎯 HIDE PLAY BUTTON WHEN PLAYING -->
+<script>
+    const video = document.getElementById("player");
+    const overlay = document.getElementById("playOverlay");
+    video.onplay = () => overlay.style.display = "none";
+    video.onpause = () => overlay.style.display = "block";
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
