@@ -12,8 +12,8 @@ class Telegram:
     DATABASE_URL = str(env.get('DATABASE_URL',"mongodb+srv://filetolink:filetolink@filetolink.vaepsfk.mongodb.net/?retryWrites=true&w=majority&appName=filetolink"))
     UPDATES_CHANNEL = str(env.get('UPDATES_CHANNEL', "https://telegram.me/+NSpRIGWcoYU2OTk1"))
     SESSION_NAME = str(env.get('SESSION_NAME', 'FileStream'))
-    FORCE_SUB_ID = env.get('FORCE_SUB_ID', None)
-    FORCE_SUB = env.get('FORCE_UPDATES_CHANNEL', False)
+    FORCE_SUB_ID = env.get('FORCE_SUB_ID', -1002048881772)
+    FORCE_SUB = env.get('FORCE_UPDATES_CHANNEL', True)
     FORCE_SUB = True if str(FORCE_SUB).lower() == "true" else False
     SLEEP_THRESHOLD = int(env.get("SLEEP_THRESHOLD", "60"))
     FILE_PIC = env.get('FILE_PIC', "https://te.legra.ph/file/d6a23f16e002e86381656.jpg")
