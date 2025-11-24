@@ -145,8 +145,12 @@ function skipForward(){ video.currentTime += 10; }
 function streamDownload(){
     let url = window.location.href;
     url = url.replace("/watch/", "/dl/").replace("/view/", "/dl/");
+
+    alert("⬇️ Download Started!");
+
     window.location.href = url;
 }
+
 
 /* COPY */
 function copyStreamLink(){
