@@ -131,23 +131,20 @@ footer {
 <footer>Copyright © 2024 🔆彡⟨ HEROFLiX ⟩彡🔆</footer>
 
 <script>
-const video=document.getElementById("player");
-const overlay=document.getElementById("playOverlay");
-video.onplay=()=>overlay.style.display="none";
-video.onpause=()=>overlay.style.display="block";
+const video = document.getElementById("player");
+const overlay = document.getElementById("playOverlay");
+video.onplay  = () => overlay.style.display = "none";
+video.onpause = () => overlay.style.display = "block";
 
 /* SKIP */
 function skipBack(){ video.currentTime -= 10; }
 function skipForward(){ video.currentTime += 10; }
 
-/* DOWNLOAD FIX */
+/* DOWNLOAD – use the actual file_url directly */
 function streamDownload(){
-    let url = window.location.href;
-    url = url.replace("/view/", "/dl/").replace("?__test__", "");
-
     const a = document.createElement('a');
-    a.href = url;
-    a.download = "{{file_name}}";
+    a.href = "{{file_url}}";              // direct file url
+    a.download = "{{file_name}}";         // suggested filename
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -160,10 +157,12 @@ function copyStreamLink(){
 }
 
 /* EXTERNAL PLAYERS */
-function vlc_player(){ window.location.href = `vlc://{{file_url}}`; }
+function vlc_player(){
+    window.location.href = `vlc://{{file_url}}`;
+}
 
 function mx_player() {
-    const url = encodeURIComponent("{{file_url}}");
+    const url   = encodeURIComponent("{{file_url}}");
     const title = encodeURIComponent("{{file_name}}");
 
     window.location.href =
