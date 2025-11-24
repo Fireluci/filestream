@@ -140,11 +140,17 @@ video.onpause=()=>overlay.style.display="block";
 function skipBack(){ video.currentTime -= 10; }
 function skipForward(){ video.currentTime += 10; }
 
-/* DOWNLOAD */
+/* DOWNLOAD FIX */
 function streamDownload(){
     let url = window.location.href;
     url = url.replace("/view/", "/dl/").replace("?__test__", "");
-    window.open(url, "_blank");
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "{{file_name}}";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }
 
 /* COPY */
@@ -155,8 +161,23 @@ function copyStreamLink(){
 
 /* EXTERNAL PLAYERS */
 function vlc_player(){ window.location.href = `vlc://{{file_url}}`; }
-function mx_player(){ window.location.href = `intent:{{file_url}}#Intent;package=com.mxtech.videoplayer.ad;S.title={{file_name}};end`; }
-function n_player(){ window.location.href = `nplayer-https://{{file_url}}`; }
+
+function mx_player() {
+    const url = encodeURIComponent("{{file_url}}");
+    const title = encodeURIComponent("{{file_name}}");
+
+    window.location.href =
+        `intent://${url}#Intent;` +
+        `scheme=https;` +
+        `type=video/*;` +
+        `S.title=${title};` +
+        `package=com.mxtech.videoplayer.ad;` +
+        `end`;
+}
+
+function n_player(){
+    window.location.href = `nplayer-https://{{file_url}}`;
+}
 </script>
 
 <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
