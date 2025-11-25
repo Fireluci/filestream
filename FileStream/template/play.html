@@ -11,11 +11,24 @@
 
 <style>
 body {
-    background: #0d0d0d;
-    color: white;
+    margin: 0;
     font-family: 'Josefin Sans', sans-serif;
+    color: white;
     user-select: none;
 }
+
+/* 🔥 BLURRED BACKGROUND IMAGE */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('https://i.ibb.co/qMqgBPDY/e44bf8ca9423beeda43aa3367cfb878a.jpg') center/cover no-repeat;
+    filter: blur(28px) brightness(0.32);
+    transform: scale(1.15);
+    z-index: -1;
+}
+
 nav { padding: 15px 10px; text-align: center; }
 nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
@@ -133,7 +146,7 @@ function cleanFileName(name){
 }
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* AUTOPLAY (not muted) */
+/* AUTOPLAY */
 video.play().catch(()=>{});
 
 /* SKIPS */
@@ -143,7 +156,7 @@ function skipForward(){ video.currentTime += 10; }
 /* DOWNLOAD + COPY */
 function streamDownload(){
     let url = window.location.href.replace("/watch/", "/dl/").replace("/view/", "/dl/");
-    alert("⬇️ Download Started!"); window.location.href = url;
+    alert("⬇️ Download Starting!"); window.location.href = url;
 }
 function copyStreamLink(){ navigator.clipboard.writeText(window.location.href); alert("🔗 Link Copied!"); }
 
