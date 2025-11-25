@@ -8,7 +8,6 @@
 
 <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/plyr.css">
 
 <style>
 body {
@@ -128,13 +127,13 @@ const video = document.getElementById("player");
 const overlay = document.getElementById("playOverlay");
 let controlsTimeout;
 
-/* CLEAN FILENAME */
+/* CLEAN FILENAME (remove text before first '-') */
 function cleanFileName(name){
     return name.replace(/^.*?-/, "").trim();
 }
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* AUTOPLAY (NOT MUTED) */
+/* AUTOPLAY (not muted) */
 video.play().catch(()=>{});
 
 /* SKIPS */
@@ -158,7 +157,7 @@ function showControls() {
     if (!video.paused) controlsTimeout = setTimeout(hideControls, 5000);
 }
 
-/* HIDE CONTROLS (ONLY WHEN PLAYING) */
+/* HIDE CONTROLS (only when playing) */
 function hideControls() {
     if (video.paused) return;
     overlay.classList.add("hide-controls");
@@ -166,11 +165,12 @@ function hideControls() {
     document.querySelector('.right-skip').classList.add("hide-controls");
 }
 
-/* TAP ANYWHERE TO TOGGLE PLAY/PAUSE */
+/* TAP TOGGLE PLAY/PAUSE */
 function screenTap(){
     if (video.paused){
         video.play();
         showControls();
+        setTimeout(hideControls, 5000);
     } else {
         video.pause();
         showControls();
@@ -179,37 +179,39 @@ function screenTap(){
 video.addEventListener("click", screenTap);
 video.addEventListener("touchend", screenTap);
 
-/* PLAY BUTTON (same as tap) */
+/* PLAY ICON TAP */
 overlay.addEventListener("click", e=>{
     e.stopPropagation();
     screenTap();
 });
 
-/* SHOW CONTROLS DURING MOVEMENT */
+/* SHOW CONTROLS ON MOVEMENT */
 video.addEventListener("mousemove", showControls);
 video.addEventListener("touchmove", showControls);
-video.addEventListener("play", showControls);
+video.addEventListener("play", () => {
+    showControls();
+    setTimeout(hideControls, 5000);
+});
 video.addEventListener("pause", showControls);
 
 /* ✔ FIXED MX PLAYER */
 function mx_player(){
     var url = "{{file_url}}";
-
     window.location.href =
     `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent("{{file_name}}")};end`;
-
     setTimeout(()=>{
         window.location.href =
         `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.pro;S.title=${encodeURIComponent("{{file_name}}")};end`;
     }, 800);
 }
 
-/* VLC */
+/* ✔ FIXED VLC (Android) */
 function vlc_player(){
-    window.location.href = `vlc://{{file_url}}`;
+    var url = "{{file_url}}";
+    window.location.href =
+    `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title=${encodeURIComponent("{{file_name}}")};end`;
+    setTimeout(()=>{ window.location.href = "market://details?id=org.videolan.vlc"; }, 800);
 }
 </script>
-
-<script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
 </body>
 </html>
