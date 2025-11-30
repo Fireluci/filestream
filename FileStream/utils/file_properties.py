@@ -17,11 +17,9 @@ db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message) -> Optional[FileId]:
     logging.debug("Starting of get_file_ids")
 
-    # IGNORE unsupported media
-    if not get_media_from_message(message):
-        return
-
+    # DO NOT FILTER HERE (important for FileStream)
     file_info = await db.get_file(db_id)
+
     if (not "file_ids" in file_info) or not client:
         logging.debug("Storing file_id of all clients in DB")
         log_msg = await send_file(FileStream, db_id, file_info['file_id'], message)
@@ -32,6 +30,7 @@ async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message
         file_info = await db.get_file(db_id)
 
     file_id_info = file_info.setdefault("file_ids", {})
+
     if not str(client.id) in file_id_info:
         logging.debug("Storing file_id in DB")
         log_msg = await send_file(FileStream, db_id, file_info['file_id'], message)
@@ -41,31 +40,29 @@ async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message
         await db.update_file_ids(db_id, file_id_info)
         logging.debug("Stored file_id in DB")
 
-    logging.debug("Middle of get_file_ids")
     file_id = FileId.decode(file_id_info[str(client.id)])
     setattr(file_id, "file_size", file_info['file_size'])
     setattr(file_id, "mime_type", file_info['mime_type'])
     setattr(file_id, "file_name", file_info['file_name'])
     setattr(file_id, "unique_id", file_info['file_unique_id'])
     logging.debug("Ending of get_file_ids")
+
     return file_id
 
 
-# --------------------------------------------------------------------
-# ONLY ALLOW processing of telegram video + document
-# --------------------------------------------------------------------
+# --------------------------------------------------------
+# ONLY VIDEOS + DOCUMENTS ARE VALID FOR USERS
+# --------------------------------------------------------
 def get_media_from_message(message: "Message") -> Any:
     allowed_media = (
         "video",
         "document"
     )
-
     for attr in allowed_media:
         media = getattr(message, attr, None)
         if media:
             return media
-
-    return None  # ignore all other media
+    return None
 
 
 def get_media_file_size(m):
@@ -80,13 +77,13 @@ def get_name(media_msg: Message | FileId) -> str:
 
     elif isinstance(media_msg, FileId):
         file_name = getattr(media_msg, "file_name", "")
+
     else:
         file_name = ""
 
     if not file_name:
         media_type = "file"
         ext = ""
-
         date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"{media_type}-{date}{ext}"
 
@@ -95,9 +92,8 @@ def get_name(media_msg: Message | FileId) -> str:
 
 def get_file_info(message):
     media = get_media_from_message(message)
-
     if not media:
-        return None  # Unsupported media ignored
+        return None  # ignore unsupported user uploads
 
     if message.chat.type == ChatType.PRIVATE:
         user_idx = message.from_user.id
@@ -121,42 +117,44 @@ async def update_file_id(msg_id, multi_clients):
         media = get_media_from_message(log_msg)
         if media:
             file_ids[str(client.id)] = getattr(media, "file_id", "")
-
     return file_ids
 
 
-# --------------------------------------------------------------------
-# NEW UPDATED SEND FILE — ONLY VIDEOS & FILES + NEW CAPTION FORMAT
-# --------------------------------------------------------------------
+# --------------------------------------------------------
+# FIXED send_file() — DOES NOT BLOCK FILESTREAM
+# --------------------------------------------------------
 async def send_file(client: Client, db_id, file_id: str, message):
 
-    # ignore unsupported media
-    if not get_media_from_message(message):
-        return
-
+    # VERY IMPORTANT → DO NOT FILTER HERE
+    # (FileStream internally passes messages that may not contain media)
+    
     file_caption = getattr(message, 'caption', None) or get_name(message)
 
     if message.chat.type == ChatType.PRIVATE:
         uid = message.from_user.id
         name = message.from_user.first_name
+
         caption_text = (
             f"{file_caption}\n\n"
-            f"Requested By : {name} [{uid}]\n"
+            f"Requested By : {name} [`{uid}`]\n"
             f"#user{uid}"
         )
+
     else:
         uid = message.chat.id
         title = message.chat.title
+
         caption_text = (
             f"{file_caption}\n\n"
-            f"Requested By : {title} [{uid}]\n"
+            f"Requested By : {title} [`{uid}`]\n"
             f"#user{uid}"
         )
 
     log_msg = await client.send_cached_media(
         chat_id=Telegram.FLOG_CHANNEL,
         file_id=file_id,
-        caption=caption_text
+        caption=caption_text,
+        parse_mode=ParseMode.MARKDOWN
     )
 
     return log_msg
