@@ -34,23 +34,7 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 .file-name { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; }
 
-/* Play Button */
-#playOverlay img {
-    width: 20vw;
-    max-width: 130px;
-    min-width: 60px;
-    filter: drop-shadow(0 0 6px #000);
-}
-
-/* Fade Hide Logic */
-.left-skip, .right-skip, #playOverlay {
-    opacity: 1;
-    transition: opacity .35s ease;
-    pointer-events: auto;
-}
-.hide-controls { opacity: 0; pointer-events: none; }
-
-/* Skip Buttons */
+/* Skip buttons */
 .skip-btn {
     position: absolute;
     top: 50%;
@@ -59,8 +43,19 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
     padding: 10px;
     user-select: none;
 }
-.left-skip { left: 20%; }
-.right-skip { right: 20%; }
+
+.left-skip { left: 10%; }
+.right-skip { right: 10%; }
+
+.hide-controls {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.left-skip, .right-skip {
+    transition: opacity 0.35s ease;
+}
 
 /* Buttons Below Player */
 .downloadBtn button {
@@ -92,26 +87,24 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <!-- VIDEO PLAYER -->
 <div style="position: relative;">
-    <video id="player" class="player"
-        src="{{file_url}}" type="video/mp4"
-        playsinline controls width="100%">
-    </video>
 
-    <!-- PLAY/PAUSE ICON -->
-    <div id="playOverlay"
-        style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); cursor:pointer;">
-        <img src="https://i.ibb.co/hFsmpbvd/play.png">
-    </div>
+    <video id="player"
+        src="{{file_url}}"
+        playsinline
+        controls
+        width="100%">
+    </video>
 
     <!-- BACK 10s -->
     <div class="skip-btn left-skip" onclick="skipBack()">
-        <img src="https://i.ibb.co/S70cgrW5/backward.png" width="50">
+        <img src="https://i.ibb.co/S70cgrW5/backward.png" width="55">
     </div>
 
     <!-- FORWARD 10s -->
     <div class="skip-btn right-skip" onclick="skipForward()">
-        <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="50">
+        <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="55">
     </div>
+
 </div>
 
 <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
@@ -137,94 +130,82 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <script>
 const video = document.getElementById("player");
-const overlay = document.getElementById("playOverlay");
-let controlsTimeout;
+const leftSkip = document.querySelector(".left-skip");
+const rightSkip = document.querySelector(".right-skip");
+let hideTimeout;
 
-/* CLEAN FILENAME (remove text before first '-') */
+/* CLEAN FILE NAME */
 function cleanFileName(name){
     return name.replace(/^.*?-/, "").trim();
 }
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* AUTOPLAY */
-video.play().catch(()=>{});
+/* --- 10-second skip functions --- */
+function skipBack() {
+    video.currentTime = Math.max(0, video.currentTime - 10);
+    showControls();
+}
+function skipForward() {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    showControls();
+}
 
-/* SKIPS */
-function skipBack(){ video.currentTime -= 10; }
-function skipForward(){ video.currentTime += 10; }
+/* --- Show controls (skip buttons) --- */
+function showControls() {
+    leftSkip.classList.remove("hide-controls");
+    rightSkip.classList.remove("hide-controls");
+
+    clearTimeout(hideTimeout);
+    if (!video.paused)
+        hideTimeout = setTimeout(hideControls, 5000);
+}
+
+/* --- Hide skip buttons --- */
+function hideControls() {
+    if (video.paused) return;
+    leftSkip.classList.add("hide-controls");
+    rightSkip.classList.add("hide-controls");
+}
+
+/* --- User Interaction Events --- */
+video.addEventListener("mousemove", showControls);
+video.addEventListener("touchstart", showControls);
+video.addEventListener("click", showControls);
+
+/* When video starts, begin hiding */
+video.addEventListener("play", () => {
+    showControls();
+});
+
+/* When paused, keep visible */
+video.addEventListener("pause", () => {
+    leftSkip.classList.remove("hide-controls");
+    rightSkip.classList.remove("hide-controls");
+});
 
 /* DOWNLOAD + COPY */
 function streamDownload(){
     let url = window.location.href.replace("/watch/", "/dl/").replace("/view/", "/dl/");
-    alert("⬇️ Download Starting!"); window.location.href = url;
+    alert("⬇️ Download Starting!"); 
+    window.location.href = url;
 }
-function copyStreamLink(){ navigator.clipboard.writeText(window.location.href); alert("🔗 Link Copied!"); }
-
-/* SHOW CONTROLS */
-function showControls() {
-    overlay.classList.remove("hide-controls");
-    document.querySelector('.left-skip').classList.remove("hide-controls");
-    document.querySelector('.right-skip').classList.remove("hide-controls");
-
-    clearTimeout(controlsTimeout);
-    if (!video.paused) controlsTimeout = setTimeout(hideControls, 5000);
+function copyStreamLink(){
+    navigator.clipboard.writeText(window.location.href);
+    alert("🔗 Link Copied!");
 }
 
-/* HIDE CONTROLS (only when playing) */
-function hideControls() {
-    if (video.paused) return;
-    overlay.classList.add("hide-controls");
-    document.querySelector('.left-skip').classList.add("hide-controls");
-    document.querySelector('.right-skip').classList.add("hide-controls");
-}
-
-/* TAP TOGGLE PLAY/PAUSE */
-function screenTap(){
-    if (video.paused){
-        video.play();
-        showControls();
-        setTimeout(hideControls, 5000);
-    } else {
-        video.pause();
-        showControls();
-    }
-}
-video.addEventListener("click", screenTap);
-video.addEventListener("touchend", screenTap);
-
-/* PLAY ICON TAP */
-overlay.addEventListener("click", e=>{
-    e.stopPropagation();
-    screenTap();
-});
-
-/* SHOW CONTROLS ON MOVEMENT */
-video.addEventListener("mousemove", showControls);
-video.addEventListener("touchmove", showControls);
-video.addEventListener("play", () => {
-    showControls();
-    setTimeout(hideControls, 5000);
-});
-video.addEventListener("pause", showControls);
-
-/* ✔ FIXED MX PLAYER */
+/* MX & VLC */
 function mx_player(){
     var url = "{{file_url}}";
     window.location.href =
     `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent("{{file_name}}")};end`;
-    setTimeout(()=>{
-        window.location.href =
-        `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.pro;S.title=${encodeURIComponent("{{file_name}}")};end`;
-    }, 800);
 }
-
-/* ✔ FIXED VLC (Android) */
 function vlc_player(){
     var url = "{{file_url}}";
     window.location.href =
     `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title=${encodeURIComponent("{{file_name}}")};end`;
-    setTimeout(()=>{ window.location.href = "market://details?id=org.videolan.vlc"; }, 800);
 }
 </script>
+
 </body>
 </html>
