@@ -16,6 +16,11 @@ db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 
 async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message) -> Optional[FileId]:
     logging.debug("Starting of get_file_ids")
+
+    # IGNORE unsupported media
+    if not get_media_from_message(message):
+        return
+
     file_info = await db.get_file(db_id)
     if (not "file_ids" in file_info) or not client:
         logging.debug("Storing file_id of all clients in DB")
@@ -46,21 +51,21 @@ async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message
     return file_id
 
 
+# --------------------------------------------------------------------
+# ONLY ALLOW processing of telegram video + document
+# --------------------------------------------------------------------
 def get_media_from_message(message: "Message") -> Any:
-    media_types = (
-        "audio",
-        "document",
-        "photo",
-        "sticker",
-        "animation",
+    allowed_media = (
         "video",
-        "voice",
-        "video_note",
+        "document"
     )
-    for attr in media_types:
+
+    for attr in allowed_media:
         media = getattr(message, attr, None)
         if media:
             return media
+
+    return None  # ignore all other media
 
 
 def get_media_file_size(m):
@@ -71,27 +76,16 @@ def get_media_file_size(m):
 def get_name(media_msg: Message | FileId) -> str:
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
-        file_name = getattr(media, "file_name", "")
+        file_name = getattr(media, "file_name", "") if media else ""
 
     elif isinstance(media_msg, FileId):
         file_name = getattr(media_msg, "file_name", "")
+    else:
+        file_name = ""
 
     if not file_name:
-        if isinstance(media_msg, Message) and media_msg.media:
-            media_type = media_msg.media.value
-        elif media_msg.file_type:
-            media_type = media_msg.file_type.name.lower()
-        else:
-            media_type = "file"
-
-        formats = {
-            "photo": "jpg", "audio": "mp3", "voice": "ogg",
-            "video": "mp4", "animation": "mp4", "video_note": "mp4",
-            "sticker": "webp"
-        }
-
-        ext = formats.get(media_type)
-        ext = "." + ext if ext else ""
+        media_type = "file"
+        ext = ""
 
         date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"{media_type}-{date}{ext}"
@@ -101,10 +95,15 @@ def get_name(media_msg: Message | FileId) -> str:
 
 def get_file_info(message):
     media = get_media_from_message(message)
+
+    if not media:
+        return None  # Unsupported media ignored
+
     if message.chat.type == ChatType.PRIVATE:
         user_idx = message.from_user.id
     else:
         user_idx = message.chat.id
+
     return {
         "user_id": user_idx,
         "file_id": getattr(media, "file_id", ""),
@@ -120,25 +119,44 @@ async def update_file_id(msg_id, multi_clients):
     for client_id, client in multi_clients.items():
         log_msg = await client.get_messages(Telegram.FLOG_CHANNEL, msg_id)
         media = get_media_from_message(log_msg)
-        file_ids[str(client.id)] = getattr(media, "file_id", "")
+        if media:
+            file_ids[str(client.id)] = getattr(media, "file_id", "")
 
     return file_ids
 
 
+# --------------------------------------------------------------------
+# NEW UPDATED SEND FILE — ONLY VIDEOS & FILES + NEW CAPTION FORMAT
+# --------------------------------------------------------------------
 async def send_file(client: Client, db_id, file_id: str, message):
+
+    # ignore unsupported media
+    if not get_media_from_message(message):
+        return
+
     file_caption = getattr(message, 'caption', None) or get_name(message)
-    log_msg = await client.send_cached_media(chat_id=Telegram.FLOG_CHANNEL, file_id=file_id,
-                                             caption=f'**{file_caption}**')
 
     if message.chat.type == ChatType.PRIVATE:
-        await log_msg.reply_text(
-            text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n**Uꜱᴇʀ ɪᴅ :** `{message.from_user.id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
-            disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
+        uid = message.from_user.id
+        name = message.from_user.first_name
+        caption_text = (
+            f"{file_caption}\n\n"
+            f"Requested By : {name} [{uid}]\n"
+            f"#user{uid}"
+        )
     else:
-        await log_msg.reply_text(
-            text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** {message.chat.title} \n**Cʜᴀɴɴᴇʟ ɪᴅ :** `{message.chat.id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
-            disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
+        uid = message.chat.id
+        title = message.chat.title
+        caption_text = (
+            f"{file_caption}\n\n"
+            f"Requested By : {title} [{uid}]\n"
+            f"#user{uid}"
+        )
+
+    log_msg = await client.send_cached_media(
+        chat_id=Telegram.FLOG_CHANNEL,
+        file_id=file_id,
+        caption=caption_text
+    )
 
     return log_msg
-    # return await client.send_cached_media(Telegram.BIN_CHANNEL, file_id)
-
