@@ -17,7 +17,6 @@ db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message) -> Optional[FileId]:
     logging.debug("Starting of get_file_ids")
 
-    # DO NOT FILTER HERE (important for FileStream)
     file_info = await db.get_file(db_id)
 
     if (not "file_ids" in file_info) or not client:
@@ -45,8 +44,8 @@ async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message
     setattr(file_id, "mime_type", file_info['mime_type'])
     setattr(file_id, "file_name", file_info['file_name'])
     setattr(file_id, "unique_id", file_info['file_unique_id'])
-    logging.debug("Ending of get_file_ids")
 
+    logging.debug("Ending of get_file_ids")
     return file_id
 
 
@@ -54,10 +53,7 @@ async def get_file_ids(client: Client | bool, db_id: str, multi_clients, message
 # ONLY VIDEOS + DOCUMENTS ARE VALID FOR USERS
 # --------------------------------------------------------
 def get_media_from_message(message: "Message") -> Any:
-    allowed_media = (
-        "video",
-        "document"
-    )
+    allowed_media = ("video", "document")
     for attr in allowed_media:
         media = getattr(message, attr, None)
         if media:
@@ -74,10 +70,8 @@ def get_name(media_msg: Message | FileId) -> str:
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
         file_name = getattr(media, "file_name", "") if media else ""
-
     elif isinstance(media_msg, FileId):
         file_name = getattr(media_msg, "file_name", "")
-
     else:
         file_name = ""
 
@@ -93,7 +87,7 @@ def get_name(media_msg: Message | FileId) -> str:
 def get_file_info(message):
     media = get_media_from_message(message)
     if not media:
-        return None  # ignore unsupported user uploads
+        return None
 
     if message.chat.type == ChatType.PRIVATE:
         user_idx = message.from_user.id
@@ -121,13 +115,10 @@ async def update_file_id(msg_id, multi_clients):
 
 
 # --------------------------------------------------------
-# FIXED send_file() — DOES NOT BLOCK FILESTREAM
+# UPDATED send_file() — NAME CLICKABLE
 # --------------------------------------------------------
 async def send_file(client: Client, db_id, file_id: str, message):
 
-    # VERY IMPORTANT → DO NOT FILTER HERE
-    # (FileStream internally passes messages that may not contain media)
-    
     file_caption = getattr(message, 'caption', None) or get_name(message)
 
     if message.chat.type == ChatType.PRIVATE:
@@ -136,7 +127,7 @@ async def send_file(client: Client, db_id, file_id: str, message):
 
         caption_text = (
             f"{file_caption}\n\n"
-            f"Requested By : {name} [`{uid}`]\n"
+            f"Requested By : [{name}](tg://user?id={uid}) [`{uid}`]\n"
             f"#user{uid}"
         )
 
@@ -146,7 +137,7 @@ async def send_file(client: Client, db_id, file_id: str, message):
 
         caption_text = (
             f"{file_caption}\n\n"
-            f"Requested By : {title} [`{uid}`]\n"
+            f"Requested By : [{title}](tg://user?id={uid}) [`{uid}`]\n"
             f"#user{uid}"
         )
 
