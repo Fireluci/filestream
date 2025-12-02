@@ -134,10 +134,34 @@ const leftSkip = document.querySelector(".left-skip");
 const rightSkip = document.querySelector(".right-skip");
 let hideTimeout;
 
-/* CLEAN FILE NAME */
-function cleanFileName(name){
-    return name.replace(/^.*?-/, "").trim();
+/* ⭐ FINAL CLEAN FILE NAME FUNCTION */
+function cleanFileName(name) {
+    if (!name) return "Unknown File";
+
+    name = name.trim();
+
+    // 1. Remove everything after video extension
+    name = name.replace(/(\.(mkv|mp4|avi|mov|wmv|flv)).*$/i, "$1");
+
+    // 2. Remove @Channel -   or   @Channel - -
+    name = name.replace(/^@[\w_]+(\s*-\s*)*/i, "").trim();
+
+    // 3. Remove @Channel-FileName
+    name = name.replace(/^@[\w_]+-/, "").trim();
+
+    // 4. Remove emojis / weird symbols from start
+    name = name.replace(/^[^\w(]+/, "").trim();
+
+    // 5. Fix duplicate filenames joined accidentally
+    if (name.toLowerCase().includes(".mkv"))
+        name = name.split(/\.mkv/i)[0] + ".mkv";
+
+    if (name.toLowerCase().includes(".mp4"))
+        name = name.split(/\.mp4/i)[0] + ".mp4";
+
+    return name.trim();
 }
+
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
 /* --- 10-second skip functions --- */
@@ -150,7 +174,7 @@ function skipForward() {
     showControls();
 }
 
-/* --- Show controls (skip buttons) --- */
+/* --- Show controls --- */
 function showControls() {
     leftSkip.classList.remove("hide-controls");
     rightSkip.classList.remove("hide-controls");
@@ -160,24 +184,19 @@ function showControls() {
         hideTimeout = setTimeout(hideControls, 5000);
 }
 
-/* --- Hide skip buttons --- */
+/* --- Hide controls --- */
 function hideControls() {
     if (video.paused) return;
     leftSkip.classList.add("hide-controls");
     rightSkip.classList.add("hide-controls");
 }
 
-/* --- User Interaction Events --- */
+/* --- Events --- */
 video.addEventListener("mousemove", showControls);
 video.addEventListener("touchstart", showControls);
 video.addEventListener("click", showControls);
 
-/* When video starts, begin hiding */
-video.addEventListener("play", () => {
-    showControls();
-});
-
-/* When paused, keep visible */
+video.addEventListener("play", () => showControls());
 video.addEventListener("pause", () => {
     leftSkip.classList.remove("hide-controls");
     rightSkip.classList.remove("hide-controls");
