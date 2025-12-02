@@ -11,6 +11,9 @@ from FileStream.bot import FileStream
 from FileStream.server import web_server
 from FileStream.bot.clients import initialize_clients
 
+# -----------------------------------------------------------
+# LOGGING
+# -----------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
     datefmt="%d/%m/%Y %H:%M:%S",
@@ -31,13 +34,13 @@ logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
+
 server = web.AppRunner(web_server())
 loop = asyncio.get_event_loop()
 
 
 # -----------------------------------------------------------
-# AUTO-RESTART SYSTEM:
-# Starts daily at 5:00 PM IST, then repeats every 12 hours.
+# AUTO-RESTART: 5:30 AM / 5:30 PM IST
 # -----------------------------------------------------------
 from datetime import datetime, timedelta, timezone
 
@@ -47,53 +50,72 @@ async def auto_restart_cycle():
     while True:
         now = datetime.now(tz=IST)
 
-        # Next 5 PM
-        next_5pm = now.replace(hour=17, minute=0, second=0, microsecond=0)
-        if next_5pm <= now:
-            next_5pm += timedelta(days=1)
+        # Next 5:30 restart time
+        next_530 = now.replace(hour=17, minute=30, second=0, microsecond=0)
+        if next_530 <= now:
+            next_530 += timedelta(days=1)
 
-        # Time until next 5 PM
-        wait_secs = (next_5pm - now).total_seconds()
+        # Wait seconds
+        wait_secs = (next_530 - now).total_seconds()
 
-        # Detect restart right after 5 PM → schedule 12 hours only
-        # (because container restarts quickly)
-        started_recently_after_5 = (now - (next_5pm - timedelta(days=1))).total_seconds() if now.hour >= 17 else -999
-
-        if 0 <= started_recently_after_5 <= 300:
-            # Within 5 mins after last restart at 5 PM → schedule 12h
+        # Detect fresh start near 5:30 PM → schedule 12 hours
+        started_near_530 = (now - (next_530 - timedelta(days=1))).total_seconds() if now.hour >= 17 else -999
+        if 0 <= started_near_530 <= 300:
             wait_secs = 12 * 3600
-            print("[Auto-Restart] Detected fresh start after 5 PM. Next restart in 12 hours.")
+            print("[Auto-Restart] Fresh start after 5:30 — scheduling next restart in 12 hours.")
         else:
-            print(f"[Auto-Restart] Next restart scheduled at {next_5pm.isoformat()} IST ({wait_secs/3600:.2f} hours).")
+            print(f"[Auto-Restart] Next restart at {next_530.isoformat()} IST ({wait_secs/3600:.2f} hrs).")
 
         await asyncio.sleep(wait_secs)
 
-        # Log restart
+        # Prepare log message
         timestamp = datetime.now(tz=IST).isoformat()
-        msg = f"[Auto-Restart] {timestamp} — BOT RESTARTED (scheduled)"
+        msg = f"♻️ BOT RESTARTED\n⏰ {timestamp}\n🔁 Auto-Restart at 5:30"
+
         print("\n" + msg + "\n")
         logging.info(msg)
 
-        # Try stopping FileStream safely
+        # Send to log channel
+        try:
+            await FileStream.send_message(
+                chat_id=Telegram.FLOG_CHANNEL,
+                text=msg
+            )
+            print("[Auto-Restart] Sent restart log to FLOG_CHANNEL.")
+        except Exception as e:
+            print("[Auto-Restart] Failed sending to FLOG_CHANNEL:", e)
+
+        # Graceful FileStream stop
         try:
             await FileStream.stop()
-        except Exception as e:
-            print("[Auto-Restart] Error stopping FileStream:", e)
+        except:
+            pass
 
-        # Cleanup web server
+        # Fully close Pyrogram
+        try:
+            await FileStream._client.disconnect()
+        except:
+            pass
+
+        try:
+            await FileStream.session.stop()
+        except:
+            pass
+
+        # Stop web server
         try:
             await server.cleanup()
-        except Exception as e:
-            print("[Auto-Restart] Error cleaning web server:", e)
+        except:
+            pass
 
-        # Exit → Koyeb auto restarts container
-        print("[Auto-Restart] Exiting to let Koyeb restart container now.")
+        print("[Auto-Restart] Fully stopped. Exiting so Koyeb restarts container.")
         sys.exit(0)
 
 
+
 # -----------------------------------------------------------
-
-
+# START SERVICES
+# -----------------------------------------------------------
 async def start_services():
     print()
     if Telegram.SECONDARY:
@@ -125,21 +147,27 @@ async def start_services():
     print("------------------------- Service Started -------------------------")
     print("                        bot =>>", bot_info.first_name)
     if bot_info.dc_id:
-        print("                        DC ID =>>", str(bot_info.dc_id))
+        print("                        DC ID =>>", str(bot_info.dc_id)))
     print(" URL =>>", Server.URL)
     print("------------------------------------------------------------------")
 
-    # Start the automatique restart scheduler
+    # Start auto-restart loop
     loop.create_task(auto_restart_cycle())
 
     await idle()
 
 
+# -----------------------------------------------------------
+# CLEANUP
+# -----------------------------------------------------------
 async def cleanup():
     await server.cleanup()
     await FileStream.stop()
 
 
+# -----------------------------------------------------------
+# MAIN
+# -----------------------------------------------------------
 if __name__ == "__main__":
     try:
         loop.run_until_complete(start_services())
