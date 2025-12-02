@@ -3,7 +3,9 @@ import asyncio
 import logging
 import traceback
 import logging.handlers as handlers
-from FileStream.config import Telegram, Server, OWNER_ID
+from FileStream.config import Telegram, Server
+OWNER_ID = Telegram.OWNER_ID
+
 from aiohttp import web
 from pyrogram import idle
 
