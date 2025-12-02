@@ -11,6 +11,7 @@ from FileStream.bot import FileStream
 from FileStream.server import web_server
 from FileStream.bot.clients import initialize_clients
 
+
 # -----------------------------------------------------------
 # LOGGING
 # -----------------------------------------------------------
@@ -37,67 +38,56 @@ logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 server = web.AppRunner(web_server())
 loop = asyncio.get_event_loop()
 
+
 # -----------------------------------------------------------
-# AUTO RESTART (6 AM + 6 PM)
+# TEST AUTO-RESTART (EVERY 1 MINUTE)
 # -----------------------------------------------------------
 from datetime import datetime, timedelta, timezone
 IST = timezone(timedelta(hours=5, minutes=30))
 
 async def auto_restart_cycle():
-    while True:
-        now = datetime.now(tz=IST)
+    # TEST MODE: Restart every 1 minute
+    wait_secs = 60
+    next_time = datetime.now(tz=IST) + timedelta(seconds=wait_secs)
 
-        # Default next restart is today 6 PM
-        next_6 = now.replace(hour=18, minute=0, second=0, microsecond=0)
+    print(f"[TEST-RESTART] Restart scheduled at {next_time.isoformat()} IST (in 1 minute).")
+    await asyncio.sleep(wait_secs)
 
-        if now.hour < 6 or (now.hour == 6 and now.minute == 0):
-            # Before 6 AM → restart today at 6 AM
-            next_6 = now.replace(hour=6, minute=0, second=0, microsecond=0)
-        elif 6 <= now.hour < 18:
-            # Between 6 AM & 6 PM → restart at 6 PM
-            next_6 = now.replace(hour=18, minute=0, second=0, microsecond=0)
-        else:
-            # After 6 PM → restart next day 6 AM
-            next_6 = now.replace(hour=6, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    timestamp = datetime.now(tz=IST).isoformat()
+    msg = (
+        f"♻️ BOT RESTARTED (TEST)\n"
+        f"⏰ {timestamp}\n"
+        f"🧪 Restart triggered after 1 minute (TEST MODE)"
+    )
 
-        wait_secs = (next_6 - now).total_seconds()
-        print(f"[Auto-Restart] Next restart at {next_6.isoformat()} IST ({wait_secs/3600:.2f} hours).")
+    print("\n" + msg + "\n")
+    logging.info(msg)
 
-        await asyncio.sleep(wait_secs)
+    # Send restart log to channel
+    try:
+        await FileStream.send_message(
+            chat_id=Telegram.FLOG_CHANNEL,
+            text=msg
+        )
+        print("[TEST-RESTART] Log sent to FLOG_CHANNEL.")
+    except Exception as e:
+        print("[TEST-RESTART] Failed to send restart log:", e)
 
-        # Restart message
-        timestamp = datetime.now(tz=IST).isoformat()
-        msg = f"♻️ BOT RESTARTED\n⏰ {timestamp}\n🔁 Auto-Restart at 6 AM / 6 PM"
+    # Graceful shutdown
+    try: await FileStream.stop()
+    except: pass
 
-        print("\n" + msg + "\n")
-        logging.info(msg)
+    try: await FileStream._client.disconnect()
+    except: pass
 
-        # Send to log channel
-        try:
-            await FileStream.send_message(
-                chat_id=Telegram.FLOG_CHANNEL,
-                text=msg
-            )
-        except Exception as e:
-            print("[Auto-Restart] Failed sending to FLOG_CHANNEL:", e)
+    try: await FileStream.session.stop()
+    except: pass
 
-        # --- Graceful Shutdown ---
-        try: await FileStream.stop()
-        except: pass
+    try: await server.cleanup()
+    except: pass
 
-        try:
-            await FileStream._client.disconnect()
-        except: pass
-
-        try:
-            await FileStream.session.stop()
-        except: pass
-
-        try: await server.cleanup()
-        except: pass
-
-        print("[Auto-Restart] Exiting — Koyeb will restart container.")
-        sys.exit(0)
+    print("[TEST-RESTART] Exiting — Koyeb will restart container.")
+    sys.exit(0)
 
 
 # -----------------------------------------------------------
@@ -117,6 +107,21 @@ async def start_services():
     FileStream.id = bot_info.id
     FileStream.username = bot_info.username
     FileStream.fname = bot_info.first_name
+
+    # SEND STARTUP MESSAGE
+    try:
+        start_msg = (
+            f"🚀 BOT STARTED\n"
+            f"⏰ {datetime.now(tz=IST).isoformat()}\n"
+            f"📌 Reason: Fresh Boot / Deploy / Manual Start"
+        )
+        await FileStream.send_message(
+            chat_id=Telegram.FLOG_CHANNEL,
+            text=start_msg
+        )
+        print("[Startup] Logged start message.")
+    except Exception as e:
+        print("[Startup] Failed to send startup log:", e)
 
     print("------------------------------ DONE ------------------------------")
     print()
@@ -138,32 +143,43 @@ async def start_services():
     print(" URL =>>", Server.URL)
     print("------------------------------------------------------------------")
 
-    # ⭐ START AUTO-RESTART LOOP (correct placement)
+    # ⭐ Start TEST 1-MIN RESTART LOOP
     loop.create_task(auto_restart_cycle())
 
-    # Keep the bot alive
+    # Keep bot alive
     await idle()
 
 
 # -----------------------------------------------------------
-# CLEANUP
+# CLEANUP (only if not SystemExit restart)
 # -----------------------------------------------------------
 async def cleanup():
-    await server.cleanup()
-    await FileStream.stop()
+    try: await server.cleanup()
+    except: pass
+
+    try: await FileStream.stop()
+    except: pass
 
 
 # -----------------------------------------------------------
-# MAIN
+# MAIN BLOCK (SystemExit safe)
 # -----------------------------------------------------------
 if __name__ == "__main__":
     try:
         loop.run_until_complete(start_services())
+    except SystemExit:
+        print("[Main] SystemExit received — skipping cleanup.")
+        pass
     except KeyboardInterrupt:
         pass
     except Exception:
         logging.error(traceback.format_exc())
     finally:
-        loop.run_until_complete(cleanup())
+        try:
+            if FileStream.is_running:
+                loop.run_until_complete(cleanup())
+        except:
+            pass
+
         loop.stop()
         print("------------------------ Stopped Services ------------------------")
