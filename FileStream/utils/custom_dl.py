@@ -43,32 +43,11 @@ class ByteStreamer:
 
                 yield chunk
 
-                # PREVENT EVENT LOOP BLOCKING
                 await asyncio.sleep(0)
 
         except FloodWait as e:
 
-            LOGGER.warning(
-                f"FloodWait {e.value}s"
-            )
-
             await asyncio.sleep(e.value)
 
-        except asyncio.CancelledError:
-
-            LOGGER.warning(
-                "Stream cancelled"
-            )
-
-        except (
-            ConnectionResetError,
-            BrokenPipeError
-        ):
-
-            LOGGER.warning(
-                "Client disconnected"
-            )
-
-        except Exception as e:
-
-            LOGGER.exception(e)
+        except:
+            pass
