@@ -1,25 +1,18 @@
-from ..config import Telegram
 from pyrogram import Client
-
-if Telegram.SECONDARY:
-    plugins=None
-    no_updates=True
-else:    
-    plugins={"root": "FileStream/bot/plugins"}
-    no_updates=None
+from FileStream.config import Telegram
 
 FileStream = Client(
-    name="FileStream",
+    "FileStreamBot",
     api_id=Telegram.API_ID,
     api_hash=Telegram.API_HASH,
-    workdir="FileStream",
-    plugins=plugins,
     bot_token=Telegram.BOT_TOKEN,
-    sleep_threshold=Telegram.SLEEP_THRESHOLD,
-    workers=Telegram.WORKERS,
-    no_updates=no_updates
+
+    workers=min(Telegram.WORKERS, 10),
+
+    sleep_threshold=30,
+    max_concurrent_transmissions=5,
+
+    no_updates=False,
+
+    in_memory=True
 )
-
-multi_clients = {}
-work_loads = {}
-
