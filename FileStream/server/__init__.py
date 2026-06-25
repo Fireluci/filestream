@@ -27,7 +27,7 @@ async def stream_handler(request):
     )
 
 
-async def web_server():
+def web_server():
 
     app = web.Application(
         client_max_size=1024**3
