@@ -12,6 +12,7 @@ from FileStream.utils.custom_dl import ByteStreamer
 
 LOGGER = logging.getLogger(__name__)
 
+# LIMIT CONCURRENT STREAMS
 STREAM_SEMAPHORE = asyncio.Semaphore(15)
 
 class_cache = {}
@@ -26,7 +27,14 @@ async def media_streamer(
 
     async with STREAM_SEMAPHORE:
 
-        range_header = request.headers.get("Range", None)
+        range_header = request.headers.get(
+            "Range",
+            None
+        )
+
+        # PREVENT EMPTY DICT CRASH
+        if not work_loads:
+            work_loads[0] = 0
 
         index = min(
             work_loads,
@@ -53,7 +61,9 @@ async def media_streamer(
 
         except InvalidHash:
 
-            LOGGER.info("Invalid hash")
+            LOGGER.info(
+                "Invalid hash"
+            )
 
             raise web.HTTPForbidden
 
@@ -67,10 +77,11 @@ async def media_streamer(
 
         if range_header:
 
-            from_bytes, until_bytes = range_header.replace(
-                "bytes=",
-                ""
-            ).split("-")
+            from_bytes, until_bytes = (
+                range_header
+                .replace("bytes=", "")
+                .split("-")
+            )
 
             from_bytes = int(from_bytes)
 
@@ -92,9 +103,12 @@ async def media_streamer(
                 text="Requested Range Not Satisfiable"
             )
 
-        req_length = until_bytes - from_bytes
+        req_length = (
+            until_bytes - from_bytes
+        )
 
-        new_chunk_size = 1024 * 256
+        # SMALLER CHUNK SIZE
+        new_chunk_size = 1024 * 128
 
         chunk_size = min(
             new_chunk_size,
@@ -105,7 +119,9 @@ async def media_streamer(
             from_bytes % chunk_size
         )
 
-        first_part_cut = from_bytes - offset
+        first_part_cut = (
+            from_bytes - offset
+        )
 
         last_part_cut = (
             until_bytes % chunk_size
@@ -122,10 +138,14 @@ async def media_streamer(
             "Accept-Ranges": "bytes",
             "Content-Length": str(req_length),
             "Content-Range": (
-                f"bytes {from_bytes}-{until_bytes}/{file_size}"
+                f"bytes "
+                f"{from_bytes}-"
+                f"{until_bytes}/"
+                f"{file_size}"
             ),
             "Content-Disposition": (
-                f'inline; filename="{file_id.file_name}"'
+                f'inline; '
+                f'filename="{file_id.file_name}"'
             ),
         }
 
@@ -136,8 +156,11 @@ async def media_streamer(
 
         await response.prepare(request)
 
+        await response.drain()
+
         part_count = math.ceil(
-            (until_bytes - offset) / chunk_size
+            (until_bytes - offset)
+            / chunk_size
         )
 
         body = tg_connect.yield_file(
@@ -150,13 +173,32 @@ async def media_streamer(
             chunk_size
         )
 
+        # SAFE WORKLOAD INIT
+        work_loads.setdefault(index, 0)
+
         work_loads[index] += 1
 
         try:
 
             async for chunk in body:
 
-                await response.write(chunk)
+                try:
+
+                    await response.write(chunk)
+
+                    # PREVENT EVENT LOOP BLOCKING
+                    await asyncio.sleep(0)
+
+                except (
+                    ConnectionResetError,
+                    BrokenPipeError
+                ):
+
+                    LOGGER.warning(
+                        "Client disconnected"
+                    )
+
+                    break
 
         except FloodWait as e:
 
@@ -164,7 +206,9 @@ async def media_streamer(
                 f"FloodWait: {e.value}"
             )
 
-            await asyncio.sleep(e.value)
+            await asyncio.sleep(
+                e.value
+            )
 
         except asyncio.CancelledError:
 
