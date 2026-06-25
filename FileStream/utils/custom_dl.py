@@ -11,7 +11,38 @@ CHUNK_SIZE = 1024 * 128
 class ByteStreamer:
 
     def __init__(self, client):
+
         self.client = client
+
+    async def get_file_properties(
+        self,
+        message_id
+    ):
+
+        try:
+
+            msg = await self.client.get_messages(
+                chat_id=self.client.storage.channel,
+                message_ids=int(message_id)
+            )
+
+            media = (
+                msg.document
+                or msg.video
+                or msg.audio
+                or msg.voice
+                or msg.video_note
+                or msg.animation
+                or msg.photo
+            )
+
+            return media
+
+        except Exception as e:
+
+            LOGGER.exception(e)
+
+            raise e
 
     async def yield_file(
         self,
@@ -47,7 +78,27 @@ class ByteStreamer:
 
         except FloodWait as e:
 
+            LOGGER.warning(
+                f"FloodWait {e.value}s"
+            )
+
             await asyncio.sleep(e.value)
 
-        except:
-            pass
+        except asyncio.CancelledError:
+
+            LOGGER.warning(
+                "Stream cancelled"
+            )
+
+        except (
+            ConnectionResetError,
+            BrokenPipeError
+        ):
+
+            LOGGER.warning(
+                "Client disconnected"
+            )
+
+        except Exception as e:
+
+            LOGGER.exception(e)
