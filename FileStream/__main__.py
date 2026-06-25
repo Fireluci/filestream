@@ -1,9 +1,16 @@
 import sys
+import os
+import gc
 import asyncio
 import logging
 import traceback
 import logging.handlers as handlers
+
 from datetime import datetime, timedelta, timezone
+
+import uvloop
+uvloop.install()
+
 from aiohttp import web
 from pyrogram import idle
 
@@ -12,16 +19,13 @@ from FileStream.bot import FileStream
 from FileStream.server import web_server
 from FileStream.bot.clients import initialize_clients
 
-# OWNER ID from config
 OWNER_ID = Telegram.OWNER_ID
 
-# ---------------------------------------------------------
-# TIME FORMATTER → "2 Dec 2025 | 6:32 PM"
-# ---------------------------------------------------------
+
 def fmt_time(dt):
     return dt.strftime("%-d %b %Y | %-I:%M %p")
 
-# Logging
+
 logging.basicConfig(
     level=logging.INFO,
     datefmt="%d/%m/%Y %H:%M:%S",
@@ -39,145 +43,272 @@ logging.basicConfig(
 )
 
 logging.getLogger("aiohttp").setLevel(logging.ERROR)
+logging.getLogger("aiohttp.access").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
 server = web.AppRunner(web_server())
-loop = asyncio.get_event_loop()
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
-# --------------------------------------------------------------------
-# 4 DAILY RESTARTS (00:00 / 06:00 / 12:00 / 18:00)
-# --------------------------------------------------------------------
+def cleanup_logs():
+    try:
+        logs = [
+            "streambot.log",
+            "streambot.log.1",
+            "streambot.log.2"
+        ]
+
+        for log in logs:
+            if os.path.exists(log):
+                os.remove(log)
+
+        print(f"[Cleanup] Removed {log}")
+
+    except Exception as e:
+        print(f"[Cleanup Error] {e}")
+
+
 def get_next_restart():
     now = datetime.now(tz=IST)
-    schedule_hours = [0, 6, 12, 18]
+
+    schedule_hours = [3, 9, 15, 21]
 
     for h in schedule_hours:
-        t = now.replace(hour=h, minute=0, second=0, microsecond=0)
+        t = now.replace(
+            hour=h,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+
         if t > now:
             return t
 
-    # all passed → tomorrow 00:00
-    return now.replace(day=now.day + 1, hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = now + timedelta(days=1)
+
+    return tomorrow.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
 
 
 async def restart_scheduler():
-    while True:
-        next_restart = get_next_restart()
-        wait_secs = (next_restart - datetime.now(tz=IST)).total_seconds()
 
-        print(f"[Auto-Restart] Next at {next_restart.isoformat()} IST ({wait_secs/3600:.2f} hours).")
+    while True:
+
+        next_restart = get_next_restart()
+
+        wait_secs = (
+            next_restart - datetime.now(tz=IST)
+        ).total_seconds()
+
+        print(
+            f"[Auto-Restart] Next restart at "
+            f"{next_restart.isoformat()} "
+            f"({wait_secs / 3600:.2f} hrs)"
+        )
+
         await asyncio.sleep(wait_secs)
 
         timestamp = fmt_time(datetime.now(tz=IST))
+
         msg = (
             f"♻️ BOT RESTARTED\n"
             f"⏰ {timestamp}\n"
-            f"🔁 Scheduled restart (4× daily)"
+            f"🔁 Scheduled restart"
         )
 
         logging.info(msg)
         print(msg)
 
-        # Notify owner ONLY
         try:
-            await FileStream.send_message(OWNER_ID, msg)
+            await FileStream.send_message(
+                OWNER_ID,
+                msg
+            )
+
         except Exception as e:
-            print("Failed to notify owner:", e)
+            print(f"Owner notify failed: {e}")
 
-        # Graceful shutdown
-        try: await FileStream.stop()
-        except: pass
+        cleanup_logs()
 
-        try: await FileStream._client.disconnect()
-        except: pass
+        gc.collect()
 
-        try: await FileStream.session.stop()
-        except: pass
+        try:
+            tasks = [
+                t for t in asyncio.all_tasks()
+                if t is not asyncio.current_task()
+            ]
 
-        try: await server.cleanup()
-        except: pass
+            for task in tasks:
+                task.cancel()
 
-        print("[Auto-Restart] Exiting for restart…")
-        sys.exit(0)
+        except:
+            pass
+
+        try:
+            await FileStream.stop()
+        except:
+            pass
+
+        try:
+            await FileStream.session.close()
+        except:
+            pass
+
+        try:
+            await server.cleanup()
+        except:
+            pass
+
+        print("[Restart] Restarting process...")
+
+        os.execl(
+            sys.executable,
+            sys.executable,
+            *sys.argv
+        )
 
 
-# --------------------------------------------------------------------
-# STARTUP
-# --------------------------------------------------------------------
 async def start_services():
-    print("\n------------------- Starting as Primary Server -------------------\n")
 
-    print("-------------------- Initializing Telegram Bot --------------------")
+    print(
+        "\n------------------- Starting as Primary Server -------------------\n"
+    )
+
+    print(
+        "-------------------- Initializing Telegram Bot --------------------"
+    )
+
     await FileStream.start()
+
     bot_info = await FileStream.get_me()
+
     FileStream.id = bot_info.id
     FileStream.username = bot_info.username
     FileStream.fname = bot_info.first_name
-    print("------------------------------ DONE ------------------------------\n")
 
-    # Startup notify
+    print(
+        "------------------------------ DONE ------------------------------\n"
+    )
+
     try:
-        timestamp = fmt_time(datetime.now(tz=IST))
+
+        timestamp = fmt_time(
+            datetime.now(tz=IST)
+        )
+
         start_msg = (
             f"🚀 BOT STARTED\n"
             f"⏰ {timestamp}\n"
             f"📌 Reason: Deploy / Restart"
         )
-        await FileStream.send_message(OWNER_ID, start_msg)
-        print("[Startup] Notified owner.")
+
+        await FileStream.send_message(
+            OWNER_ID,
+            start_msg
+        )
+
+        print("[Startup] Owner notified.")
+
     except:
-        print("[Startup] Failed to notify owner.")
+        print("[Startup] Notify failed.")
 
-    print("---------------------- Initializing Clients ----------------------")
+    print(
+        "---------------------- Initializing Clients ----------------------"
+    )
+
     await initialize_clients()
-    print("------------------------------ DONE ------------------------------\n")
 
-    print("--------------------- Initializing Web Server ---------------------")
+    print(
+        "------------------------------ DONE ------------------------------\n"
+    )
+
+    print(
+        "--------------------- Initializing Web Server ---------------------"
+    )
+
     await server.setup()
-    await web.TCPSite(server, Server.BIND_ADDRESS, Server.PORT).start()
-    print("------------------------------ DONE ------------------------------\n")
 
-    print("------------------------- Service Started -------------------------")
-    print("                        bot =>>", bot_info.first_name)
+    await web.TCPSite(
+        server,
+        Server.BIND_ADDRESS,
+        Server.PORT
+    ).start()
+
+    print(
+        "------------------------------ DONE ------------------------------\n"
+    )
+
+    print(
+        "------------------------- Service Started -------------------------"
+    )
+
+    print("bot =>>", bot_info.first_name)
+
     if bot_info.dc_id:
-        print("                        DC ID =>>", bot_info.dc_id)
-    print(" URL =>>", Server.URL)
-    print("------------------------------------------------------------------")
+        print("DC ID =>>", bot_info.dc_id)
 
-    # Start restart loop
+    print("URL =>>", Server.URL)
+
+    print(
+        "------------------------------------------------------------------"
+    )
+
     loop.create_task(restart_scheduler())
 
     await idle()
 
 
-# --------------------------------------------------------------------
-# CLEANUP
-# --------------------------------------------------------------------
 async def cleanup():
-    try: await server.cleanup()
-    except: pass
 
-    try: await FileStream.stop()
-    except: pass
-
-
-# --------------------------------------------------------------------
-# MAIN
-# --------------------------------------------------------------------
-if __name__ == "__main__":
     try:
-        loop.run_until_complete(start_services())
+        await server.cleanup()
+    except:
+        pass
+
+    try:
+        await FileStream.stop()
+    except:
+        pass
+
+
+if __name__ == "__main__":
+
+    try:
+
+        loop.run_until_complete(
+            start_services()
+        )
+
     except SystemExit:
-        print("[Main] Scheduled restart → skipping cleanup.")
+
+        print("[Main] Restart requested.")
+
     except Exception:
-        logging.error(traceback.format_exc())
+
+        logging.error(
+            traceback.format_exc()
+        )
+
     finally:
+
         try:
-            loop.run_until_complete(cleanup())
+            loop.run_until_complete(
+                cleanup()
+            )
+
         except:
             pass
 
         loop.stop()
-        print("------------------------ Stopped Services ------------------------")
+
+        print(
+            "------------------------ Stopped Services ------------------------"
+        )
