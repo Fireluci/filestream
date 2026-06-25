@@ -1,14 +1,39 @@
 import logging
 
-from pyrogram.file_id import FileId
-
 LOGGER = logging.getLogger(__name__)
+
+
+def get_name(message):
+
+    media = (
+        message.document
+        or message.video
+        or message.audio
+        or message.voice
+        or message.video_note
+        or message.animation
+        or message.photo
+    )
+
+    if not media:
+        return None
+
+    file_name = getattr(
+        media,
+        "file_name",
+        None
+    )
+
+    if not file_name:
+        file_name = f"{media.file_unique_id}.bin"
+
+    return file_name
 
 
 async def get_file_ids(
     client,
     message_id,
-    multi_clients,
+    multi_clients=None,
     message=None
 ):
 
