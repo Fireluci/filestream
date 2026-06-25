@@ -1,9 +1,10 @@
-aiohttp
-pyrofork
-python-dotenv
-tgcrypto
-motor
+aiohttp==3.9.5
 aiofiles
+tgcrypto
+pyrofork
+TgCrypto
+pymongo[srv]
+motor
 dnspython
-requests
-jinja2
+python-dotenv
+uvloop
