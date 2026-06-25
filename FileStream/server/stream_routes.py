@@ -1,18 +1,15 @@
 import asyncio
 import logging
 import math
-import time
 
 from aiohttp import web
 from pyrogram.errors import FloodWait
 
 from FileStream.server.exceptions import InvalidHash
-from FileStream.server.streamer import FileStreamer
 from FileStream.utils.custom_dl import ByteStreamer
 
 LOGGER = logging.getLogger(__name__)
 
-# LIMIT CONCURRENT STREAMS
 STREAM_SEMAPHORE = asyncio.Semaphore(15)
 
 class_cache = {}
@@ -32,7 +29,6 @@ async def media_streamer(
             None
         )
 
-        # PREVENT EMPTY DICT CRASH
         if not work_loads:
             work_loads[0] = 0
 
@@ -60,10 +56,6 @@ async def media_streamer(
             )
 
         except InvalidHash:
-
-            LOGGER.info(
-                "Invalid hash"
-            )
 
             raise web.HTTPForbidden
 
@@ -96,18 +88,10 @@ async def media_streamer(
             from_bytes = 0
             until_bytes = file_size - 1
 
-        if from_bytes > file_size:
-
-            return web.Response(
-                status=416,
-                text="Requested Range Not Satisfiable"
-            )
-
         req_length = (
             until_bytes - from_bytes
         )
 
-        # SMALLER CHUNK SIZE
         new_chunk_size = 1024 * 128
 
         chunk_size = min(
@@ -156,8 +140,6 @@ async def media_streamer(
 
         await response.prepare(request)
 
-        await response.drain()
-
         part_count = math.ceil(
             (until_bytes - offset)
             / chunk_size
@@ -173,7 +155,6 @@ async def media_streamer(
             chunk_size
         )
 
-        # SAFE WORKLOAD INIT
         work_loads.setdefault(index, 0)
 
         work_loads[index] += 1
@@ -186,39 +167,17 @@ async def media_streamer(
 
                     await response.write(chunk)
 
-                    # PREVENT EVENT LOOP BLOCKING
                     await asyncio.sleep(0)
 
                 except (
                     ConnectionResetError,
                     BrokenPipeError
                 ):
-
-                    LOGGER.warning(
-                        "Client disconnected"
-                    )
-
                     break
 
         except FloodWait as e:
 
-            LOGGER.warning(
-                f"FloodWait: {e.value}"
-            )
-
-            await asyncio.sleep(
-                e.value
-            )
-
-        except asyncio.CancelledError:
-
-            LOGGER.warning(
-                "Stream cancelled"
-            )
-
-        except Exception as e:
-
-            LOGGER.exception(e)
+            await asyncio.sleep(e.value)
 
         finally:
 
