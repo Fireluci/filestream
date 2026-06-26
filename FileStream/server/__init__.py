@@ -1,38 +1,7 @@
 from aiohttp import web
-
-from FileStream.server.stream_routes import media_streamer
-
-routes = web.RouteTableDef()
-
-
-@routes.get("/watch/{path}")
-async def watch_handler(request):
-
-    path = request.match_info["path"]
-
-    return await media_streamer(
-        request,
-        path
-    )
-
-
-@routes.get("/stream/{path}")
-async def stream_handler(request):
-
-    path = request.match_info["path"]
-
-    return await media_streamer(
-        request,
-        path
-    )
-
+from .stream_routes import routes
 
 def web_server():
-
-    app = web.Application(
-        client_max_size=1024**3
-    )
-
-    app.router.add_routes(routes)
-
-    return app
+    web_app = web.Application(client_max_size=30000000)
+    web_app.add_routes(routes)
+    return web_app
