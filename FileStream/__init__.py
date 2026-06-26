@@ -1,5 +1,8 @@
+import time
 from pyrogram import Client
 from FileStream.config import Telegram
+
+
 
 FileStream = Client(
     "FileStreamBot",
@@ -16,3 +19,8 @@ FileStream = Client(
 
     in_memory=True
 )
+
+
+StartTime = time.time()
+
+__version__ = "2.0"
