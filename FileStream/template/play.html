@@ -106,14 +106,17 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 }
 
 .track-box {
-    display: none;
     text-align: center;
+    background: rgba(20, 20, 20, 0.7);
+    border: 1px solid #333;
+    padding: 8px 12px;
+    border-radius: 8px;
 }
 
 .track-box label {
     font-size: 12px;
     color: #ffcc00;
-    margin-right: 5px;
+    margin-right: 8px;
     font-weight: 600;
 }
 
@@ -192,15 +195,19 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
 
-<!-- AUDIO & SUBTITLE SELECTOR UI -->
+<!-- AUDIO & SUBTITLE SELECTOR UI (Always Visible) -->
 <div class="track-selectors">
-    <div id="audioTrackContainer" class="track-box">
+    <div class="track-box">
         <label>Audio Track:</label>
-        <select id="audioTrackSelect" onchange="changeAudioTrack(this.value)"></select>
+        <select id="audioTrackSelect" onchange="changeAudioTrack(this.value)">
+            <option value="0">Default Track (Track 1)</option>
+        </select>
     </div>
-    <div id="subTrackContainer" class="track-box">
+    <div class="track-box">
         <label>Subtitles:</label>
-        <select id="subTrackSelect" onchange="changeSubtitleTrack(this.value)"></select>
+        <select id="subTrackSelect" onchange="changeSubtitleTrack(this.value)">
+            <option value="off">Off</option>
+        </select>
     </div>
 </div>
 
@@ -252,18 +259,16 @@ function showControls() {
     fadeControls.forEach(el => el.classList.remove("hide-controls"));
     clearTimeout(hideTimeout);
     
-    // If the video is playing, hide controls after 5 seconds of inactivity
     if (!video.paused) {
         hideTimeout = setTimeout(hideControls, 5000);
     }
 }
 
 function hideControls() {
-    if (video.paused) return; // Keep visible if paused
+    if (video.paused) return; 
     fadeControls.forEach(el => el.classList.add("hide-controls"));
 }
 
-/* Event Listeners for Activity Detection */
 playerContainer.addEventListener("mousemove", showControls);
 playerContainer.addEventListener("touchstart", showControls);
 playerContainer.addEventListener("click", showControls);
@@ -275,7 +280,7 @@ video.addEventListener("play", () => {
 
 video.addEventListener("pause", () => {
     playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    showControls(); // Ensure controls stay visible on pause
+    showControls(); 
 });
 
 /* --- Center Play / Pause Logic --- */
@@ -297,13 +302,11 @@ function skipForward() {
     showControls();
 }
 
-/* --- Audio & Subtitle Track Extraction Hook --- */
+/* --- Track Scanning & Fallback Population --- */
 video.addEventListener("loadedmetadata", () => {
+    const audioSelect = document.getElementById("audioTrackSelect");
     if (video.audioTracks && video.audioTracks.length > 0) {
-        const audioContainer = document.getElementById("audioTrackContainer");
-        const audioSelect = document.getElementById("audioTrackSelect");
         audioSelect.innerHTML = "";
-
         for (let i = 0; i < video.audioTracks.length; i++) {
             let track = video.audioTracks[i];
             let option = document.createElement("option");
@@ -312,14 +315,11 @@ video.addEventListener("loadedmetadata", () => {
             if (track.enabled) option.selected = true;
             audioSelect.appendChild(option);
         }
-        audioContainer.style.display = "block";
     }
 
+    const subSelect = document.getElementById("subTrackSelect");
     if (video.textTracks && video.textTracks.length > 0) {
-        const subContainer = document.getElementById("subTrackContainer");
-        const subSelect = document.getElementById("subTrackSelect");
         subSelect.innerHTML = '<option value="off">Off</option>';
-
         for (let i = 0; i < video.textTracks.length; i++) {
             let track = video.textTracks[i];
             let option = document.createElement("option");
@@ -328,14 +328,16 @@ video.addEventListener("loadedmetadata", () => {
             if (track.mode === "showing") option.selected = true;
             subSelect.appendChild(option);
         }
-        subContainer.style.display = "block";
     }
 });
 
 function changeAudioTrack(selectedIndex) {
-    if (!video.audioTracks) return;
-    for (let i = 0; i < video.audioTracks.length; i++) {
-        video.audioTracks[i].enabled = (i == selectedIndex);
+    if (video.audioTracks) {
+        for (let i = 0; i < video.audioTracks.length; i++) {
+            video.audioTracks[i].enabled = (i == selectedIndex);
+        }
+    } else {
+        alert("⚠️ Direct browser web playback only reads the default container track for this file format. Use VLC or MX Player below for multi-audio track switching!");
     }
 }
 
