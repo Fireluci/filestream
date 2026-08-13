@@ -8,8 +8,6 @@
 
 <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Include Clappr Player with HLS support for multi-audio/subtitle track manifests -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
 
 <style>
 body {
@@ -36,11 +34,66 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 .file-name { text-align: center; margin-top: 15px; font-weight: 600; font-size: 15px; }
 
-/* Player Container Sizing */
-#player-wrapper {
-    width: 100%;
-    aspect-ratio: 16/9;
-    max-height: 550px;
+/* Dynamic Control Elements that hide/show together */
+.fade-controls {
+    opacity: 1;
+    transition: opacity 0.35s ease;
+}
+
+.hide-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Skip Buttons */
+.skip-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+.skip-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: translateY(-50%) scale(1.1);
+}
+.left-skip { left: 4%; }
+.right-skip { right: 4%; }
+
+/* Center Play Button Overlay */
+.center-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+.center-play-btn:hover {
+    background: rgba(255, 204, 0, 0.85);
+    border-color: #ffcc00;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+.center-play-btn:hover svg {
+    fill: #000;
 }
 
 /* Buttons Below Player */
@@ -71,8 +124,40 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <div style="width:100%; max-width:900px; margin:auto;">
 
-<!-- ADVANCED PLAYER CONTAINER (Replaces standard HTML5 video tag) -->
-<div id="player-wrapper"></div>
+<!-- VIDEO PLAYER CONTAINER -->
+<div style="position: relative;" id="playerContainer">
+
+    <video id="player"
+        src="{{file_url}}"
+        playsinline
+        controls
+        width="100%">
+    </video>
+
+    <!-- CENTER PLAY/PAUSE BUTTON -->
+    <div id="centerPlayBtn" class="center-play-btn fade-controls" onclick="togglePlay()">
+        <svg id="playPauseIcon" viewBox="0 0 24 24" width="32" height="32" fill="#fff">
+            <path d="M8 5v14l11-7z"/>
+        </svg>
+    </div>
+
+    <!-- BACK 10s -->
+    <div class="skip-btn left-skip fade-controls" onclick="skipBack()" title="Rewind 10s">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff">
+            <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.08 11.03 16.6 8 12.5 8z"/>
+            <text x="12" y="15" font-size="7" font-weight="bold" fill="#fff" text-anchor="middle">10</text>
+        </svg>
+    </div>
+
+    <!-- FORWARD 10s -->
+    <div class="skip-btn right-skip fade-controls" onclick="skipForward()" title="Forward 10s">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff">
+            <path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.16-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.92 11.03 7.4 8 11.5 8z"/>
+            <text x="12" y="15" font-size="7" font-weight="bold" fill="#fff" text-anchor="middle">10</text>
+        </svg>
+    </div>
+
+</div>
 
 <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
 
@@ -86,16 +171,22 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
         <img style="height:22px;" src="https://i.ibb.co/RTH4vkB5/copy-link.png"> Copy Link
     </button>
     <button onclick="vlc_player()">
-        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
+        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player (Multi-Audio)
     </button>
     <button onclick="mx_player()">
-        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
+        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player (Multi-Audio)
     </button>
 </div>
 
 </div>
 
 <script>
+const video = document.getElementById("player");
+const playerContainer = document.getElementById("playerContainer");
+const fadeControls = document.querySelectorAll(".fade-controls");
+const playPauseIcon = document.getElementById("playPauseIcon");
+let hideTimeout;
+
 /* ⭐ CLEAN FILE NAME FUNCTION */
 function cleanFileName(name) {
     if (!name) return "Unknown File";
@@ -113,20 +204,53 @@ function cleanFileName(name) {
 
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* --- Initialize Clappr Multi-Stream / Subtitle Player --- */
-window.onload = function() {
-    var player = new Clappr.Player({
-        source: "{{file_url}}",
-        parentId: "#player-wrapper",
-        width: "100%",
-        height: "100%",
-        autoPlay: false,
-        plugins: [],
-        playback: {
-            extNative: true
-        }
-    });
-};
+/* --- Control Auto-Hide / Show Logic --- */
+function showControls() {
+    fadeControls.forEach(el => el.classList.remove("hide-controls"));
+    clearTimeout(hideTimeout);
+    
+    if (!video.paused) {
+        hideTimeout = setTimeout(hideControls, 5000);
+    }
+}
+
+function hideControls() {
+    if (video.paused) return; 
+    fadeControls.forEach(el => el.classList.add("hide-controls"));
+}
+
+playerContainer.addEventListener("mousemove", showControls);
+playerContainer.addEventListener("touchstart", showControls);
+playerContainer.addEventListener("click", showControls);
+
+video.addEventListener("play", () => {
+    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    showControls();
+});
+
+video.addEventListener("pause", () => {
+    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    showControls(); 
+});
+
+/* --- Center Play / Pause Logic --- */
+function togglePlay() {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+}
+
+/* --- 10-second skip functions --- */
+function skipBack() {
+    video.currentTime = Math.max(0, video.currentTime - 10);
+    showControls();
+}
+function skipForward() {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    showControls();
+}
 
 /* DOWNLOAD + COPY */
 function streamDownload(){
