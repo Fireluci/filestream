@@ -32,29 +32,84 @@ body::before {
 nav { padding: 15px 10px; text-align: center; }
 nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
-.file-name { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; }
+.file-name { text-align: center; margin-top: 15px; font-weight: 600; font-size: 15px; }
 
-/* Skip buttons */
+/* Skip buttons - Permanent UI */
 .skip-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    padding: 10px;
-    user-select: none;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease, transform 0.2s ease;
+    z-index: 10;
 }
 
-.left-skip { left: 10%; }
-.right-skip { right: 10%; }
-
-.hide-controls {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
+.skip-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%) scale(1.08);
 }
 
-.left-skip, .right-skip {
-    transition: opacity 0.35s ease;
+.left-skip { left: 5%; }
+.right-skip { right: 5%; }
+
+/* Center Play Button Overlay */
+.center-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s ease, transform 0.2s ease, opacity 0.3s ease;
+}
+.center-play-btn:hover {
+    background: rgba(0, 0, 0, 0.75);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Track Selectors Styling */
+.track-selectors {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.track-box {
+    display: none;
+    text-align: center;
+}
+
+.track-box label {
+    font-size: 12px;
+    color: #ffcc00;
+    margin-right: 5px;
+    font-weight: 600;
+}
+
+.track-box select {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 /* Buttons Below Player */
@@ -85,7 +140,7 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <div style="width:100%; max-width:900px; margin:auto;">
 
-<!-- VIDEO PLAYER -->
+<!-- VIDEO PLAYER CONTAINER -->
 <div style="position: relative;">
 
     <video id="player"
@@ -95,23 +150,43 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
         width="100%">
     </video>
 
+    <!-- CENTER PLAY/PAUSE BUTTON -->
+    <div id="centerPlayBtn" class="center-play-btn" onclick="togglePlay()">
+        <img id="playPauseIcon" src="https://i.ibb.co/3063z2v/play.png" width="40">
+    </div>
+
     <!-- BACK 10s -->
     <div class="skip-btn left-skip" onclick="skipBack()">
-        <img src="https://i.ibb.co/S70cgrW5/backward.png" width="55">
+        <img src="https://i.ibb.co/S70cgrW5/backward.png" width="32">
     </div>
 
     <!-- FORWARD 10s -->
     <div class="skip-btn right-skip" onclick="skipForward()">
-        <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="55">
+        <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="32">
     </div>
 
 </div>
 
 <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
 
+<!-- DYNAMIC TRACK SELECTORS (Audio & Subtitles) -->
+<div class="track-selectors">
+    <!-- Audio Track Selector -->
+    <div id="audioTrackContainer" class="track-box">
+        <label>Audio:</label>
+        <select id="audioTrackSelect" onchange="changeAudioTrack(this.value)"></select>
+    </div>
+
+    <!-- Subtitle Track Selector -->
+    <div id="subTrackContainer" class="track-box">
+        <label>Subtitles:</label>
+        <select id="subTrackSelect" onchange="changeSubtitleTrack(this.value)"></select>
+    </div>
+</div>
+
 <!-- ACTION BUTTONS -->
 <div class="downloadBtn"
-     style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:25px;">
+     style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:20px;">
     <button onclick="streamDownload()">
         <img style="height:22px;" src="https://i.ibb.co/D6CnBqs/download.png"> Download
     </button>
@@ -130,77 +205,121 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
 <script>
 const video = document.getElementById("player");
-const leftSkip = document.querySelector(".left-skip");
-const rightSkip = document.querySelector(".right-skip");
+const centerPlayBtn = document.getElementById("centerPlayBtn");
+const playPauseIcon = document.getElementById("playPauseIcon");
 let hideTimeout;
 
-/* ⭐ FINAL CLEAN FILE NAME FUNCTION */
+/* ⭐ CLEAN FILE NAME FUNCTION */
 function cleanFileName(name) {
     if (!name) return "Unknown File";
-
     name = name.trim();
-
-    // 1. Remove everything after video extension
     name = name.replace(/(\.(mkv|mp4|avi|mov|wmv|flv)).*$/i, "$1");
-
-    // 2. Remove @Channel -   or   @Channel - -
     name = name.replace(/^@[\w_]+(\s*-\s*)*/i, "").trim();
-
-    // 3. Remove @Channel-FileName
     name = name.replace(/^@[\w_]+-/, "").trim();
-
-    // 4. Remove emojis / weird symbols from start
     name = name.replace(/^[^\w(]+/, "").trim();
-
-    // 5. Fix duplicate filenames joined accidentally
     if (name.toLowerCase().includes(".mkv"))
         name = name.split(/\.mkv/i)[0] + ".mkv";
-
     if (name.toLowerCase().includes(".mp4"))
         name = name.split(/\.mp4/i)[0] + ".mp4";
-
     return name.trim();
 }
 
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
+/* --- Center Play / Pause Logic --- */
+function togglePlay() {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+}
+
+video.addEventListener("play", () => {
+    playPauseIcon.src = "https://i.ibb.co/5G8N97v/pause.png"; 
+    centerPlayBtn.style.opacity = "0";
+    centerPlayBtn.style.pointerEvents = "none";
+});
+
+video.addEventListener("pause", () => {
+    playPauseIcon.src = "https://i.ibb.co/3063z2v/play.png"; 
+    centerPlayBtn.style.opacity = "1";
+    centerPlayBtn.style.pointerEvents = "auto";
+});
+
+// Show center play button briefly on video interaction if playing
+video.addEventListener("mousemove", () => {
+    if (!video.paused) {
+        centerPlayBtn.style.opacity = "1";
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => {
+            if (!video.paused) centerPlayBtn.style.opacity = "0";
+        }, 1500);
+    }
+});
+
 /* --- 10-second skip functions --- */
 function skipBack() {
     video.currentTime = Math.max(0, video.currentTime - 10);
-    showControls();
 }
 function skipForward() {
     video.currentTime = Math.min(video.duration, video.currentTime + 10);
-    showControls();
 }
 
-/* --- Show controls --- */
-function showControls() {
-    leftSkip.classList.remove("hide-controls");
-    rightSkip.classList.remove("hide-controls");
+/* --- Multi-Audio & Subtitles Detection Logic --- */
+video.addEventListener("loadedmetadata", () => {
+    // 1. Handle Audio Tracks (Native API support where available)
+    if (video.audioTracks && video.audioTracks.length > 1) {
+        const audioContainer = document.getElementById("audioTrackContainer");
+        const audioSelect = document.getElementById("audioTrackSelect");
+        audioSelect.innerHTML = "";
 
-    clearTimeout(hideTimeout);
-    if (!video.paused)
-        hideTimeout = setTimeout(hideControls, 5000);
-}
+        for (let i = 0; i < video.audioTracks.length; i++) {
+            let track = video.audioTracks[i];
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = track.label || track.language || `Track ${i + 1}`;
+            if (track.enabled) option.selected = true;
+            audioSelect.appendChild(option);
+        }
+        audioContainer.style.display = "block";
+    }
 
-/* --- Hide controls --- */
-function hideControls() {
-    if (video.paused) return;
-    leftSkip.classList.add("hide-controls");
-    rightSkip.classList.add("hide-controls");
-}
+    // 2. Handle Text / Subtitle Tracks
+    if (video.textTracks && video.textTracks.length > 0) {
+        const subContainer = document.getElementById("subTrackContainer");
+        const subSelect = document.getElementById("subTrackSelect");
+        subSelect.innerHTML = '<option value="off">Off</option>';
 
-/* --- Events --- */
-video.addEventListener("mousemove", showControls);
-video.addEventListener("touchstart", showControls);
-video.addEventListener("click", showControls);
-
-video.addEventListener("play", () => showControls());
-video.addEventListener("pause", () => {
-    leftSkip.classList.remove("hide-controls");
-    rightSkip.classList.remove("hide-controls");
+        for (let i = 0; i < video.textTracks.length; i++) {
+            let track = video.textTracks[i];
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = track.label || track.language || `Subtitle ${i + 1}`;
+            if (track.mode === "showing") option.selected = true;
+            subSelect.appendChild(option);
+        }
+        subContainer.style.display = "block";
+    }
 });
+
+function changeAudioTrack(selectedIndex) {
+    if (!video.audioTracks) return;
+    for (let i = 0; i < video.audioTracks.length; i++) {
+        video.audioTracks[i].enabled = (i == selectedIndex);
+    }
+}
+
+function changeSubtitleTrack(selectedIndex) {
+    if (!video.textTracks) return;
+    for (let i = 0; i < video.textTracks.length; i++) {
+        if (selectedIndex === "off") {
+            video.textTracks[i].mode = "disabled";
+        } else {
+            video.textTracks[i].mode = (i == selectedIndex) ? "showing" : "disabled";
+        }
+    }
+}
 
 /* DOWNLOAD + COPY */
 function streamDownload(){
