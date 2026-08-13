@@ -8,222 +8,74 @@
 
 <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&display=swap');
-
 body {
     margin: 0;
     font-family: 'Josefin Sans', sans-serif;
     color: white;
     user-select: none;
-    background-color: #0b0f19;
-    overflow-x: hidden;
 }
 
+/* 🔥 BLURRED BACKGROUND IMAGE */
 body::before {
     content: "";
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background: url('https://i.ibb.co/qMqgBPDY/e44bf8ca9423beeda43aa3367cfb878a.jpg') center/cover no-repeat;
-    filter: blur(35px) brightness(0.28);
+    filter: blur(28px) brightness(0.32);
     transform: scale(1.15);
     z-index: -1;
 }
 
-nav {
-    padding: 18px 10px;
-    text-align: center;
-    background: rgba(11, 15, 25, 0.4);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-nav h3 { font-size: 24px; font-weight: 700; color: #ffcc00; letter-spacing: 1px; }
+nav { padding: 15px 10px; text-align: center; }
+nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 
-.main-container {
-    width: 100%;
-    max-width: 950px;
-    margin: 20px auto;
-    padding: 0 15px;
-}
+.file-name { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; }
 
-.video-wrapper {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.fade-controls {
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.hide-controls {
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
+/* Skip buttons */
 .skip-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(6px);
-    z-index: 10;
-    transition: background 0.2s, transform 0.2s;
+    padding: 10px;
+    user-select: none;
 }
-.skip-btn:hover {
-    background: rgba(255, 204, 0, 0.85);
-    border-color: #ffcc00;
-    transform: translateY(-50%) scale(1.1);
-}
-.skip-btn:hover svg { fill: #000; text { fill: #000; } }
-.left-skip { left: 4%; }
-.right-skip { right: 4%; }
 
-.center-play-btn {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.65);
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    border-radius: 50%;
-    width: 76px;
-    height: 76px;
-    cursor: pointer;
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: background 0.2s, transform 0.2s;
-}
-.center-play-btn:hover {
-    background: rgba(255, 204, 0, 0.9);
-    border-color: #ffcc00;
-    transform: translate(-50%, -50%) scale(1.12);
-}
-.center-play-btn:hover svg { fill: #000; }
+.left-skip { left: 10%; }
+.right-skip { right: 10%; }
 
-.track-bar {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 15px;
-    background: rgba(20, 25, 40, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+.hide-controls {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.left-skip, .right-skip {
+    transition: opacity 0.35s ease;
+}
+
+/* Buttons Below Player */
+.downloadBtn button {
+    background: #222;
+    border: 1px solid #444;
     padding: 10px 15px;
-    border-radius: 10px;
-    backdrop-filter: blur(8px);
-}
-.track-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.track-group label {
-    font-size: 12px;
-    color: #ffcc00;
-    font-weight: 600;
-}
-.track-group select {
-    background: #151a23;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.file-meta-box {
-    text-align: center;
-    margin-top: 12px;
-    background: rgba(20, 25, 40, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 10px 15px;
-    border-radius: 10px;
-    backdrop-filter: blur(8px);
-}
-.file-name {
-    font-weight: 600;
-    font-size: 13px;
-    color: #e2e8f0;
-    word-break: break-word;
-}
-
-.action-buttons-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 15px;
-}
-
-.action-btn {
-    background: linear-gradient(135deg, #1e2530 0%, #151a23 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 18px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 13px;
     color: #fff;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: all 0.25s ease;
 }
-.action-btn:hover {
-    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
-    color: #0b0f19;
+.downloadBtn button:hover {
+    background: #ffcc00;
+    color: #000;
     border-color: #ffcc00;
-    transform: translateY(-2px);
 }
-.action-btn img { height: 18px; width: 18px; object-fit: contain; }
-
-#loadingOverlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(11, 15, 25, 0.85);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    transition: opacity 0.4s ease;
-}
-.spinner {
-    width: 45px; height: 45px;
-    border: 3px solid rgba(255, 204, 0, 0.2);
-    border-top-color: #ffcc00;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 
@@ -231,178 +83,126 @@ video {
 
 <nav><h3>🔆彡⟨ HEROFLiX ⟩彡🔆</h3></nav>
 
-<div class="main-container">
+<div style="width:100%; max-width:900px; margin:auto;">
 
-    <div class="video-wrapper" id="playerContainer">
-        <div id="loadingOverlay">
-            <div class="spinner"></div>
-            <p style="margin-top: 12px; font-size: 13px; color: #a0aec0; font-weight: 600;">Processing & Buffering Stream...</p>
-        </div>
+<!-- VIDEO PLAYER -->
+<div style="position: relative;">
 
-        <video id="player" playsinline controls width="100%"></video>
+    <video id="player"
+        src="{{file_url}}"
+        playsinline
+        controls
+        width="100%">
+    </video>
 
-        <div id="centerPlayBtn" class="center-play-btn fade-controls" onclick="togglePlay()">
-            <svg id="playPauseIcon" viewBox="0 0 24 24" width="30" height="30" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
-        </div>
-
-        <div class="skip-btn left-skip fade-controls" onclick="skipBack()" title="Rewind 10s">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C20.08 11.03 16.6 8 12.5 8z"/>
-                <text x="12" y="15" font-size="6.5" font-weight="bold" fill="#fff" text-anchor="middle">10</text>
-            </svg>
-        </div>
-
-        <div class="skip-btn right-skip fade-controls" onclick="skipForward()" title="Forward 10s">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                <path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.16-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C3.92 11.03 7.4 8 11.5 8z"/>
-                <text x="12" y="15" font-size="6.5" font-weight="bold" fill="#fff" text-anchor="middle">10</text>
-            </svg>
-        </div>
+    <!-- BACK 10s -->
+    <div class="skip-btn left-skip" onclick="skipBack()">
+        <img src="https://i.ibb.co/S70cgrW5/backward.png" width="55">
     </div>
 
-    <!-- ACTIVE AUDIO & SUBTITLE SELECTOR BAR -->
-    <div class="track-bar">
-        <div class="track-group">
-            <label>Audio:</label>
-            <select id="audioSelect" onchange="switchAudioTrack(this.value)">
-                <option value="0">Default Audio</option>
-            </select>
-        </div>
-        <div class="track-group">
-            <label>Subtitles:</label>
-            <select id="subSelect" onchange="switchSubtitleTrack(this.value)">
-                <option value="-1">Off</option>
-            </select>
-        </div>
+    <!-- FORWARD 10s -->
+    <div class="skip-btn right-skip" onclick="skipForward()">
+        <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="55">
     </div>
 
-    <div class="file-meta-box">
-        <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
-    </div>
+</div>
 
-    <div class="action-buttons-grid">
-        <button class="action-btn" onclick="streamDownload()">
-            <img src="https://i.ibb.co/D6CnBqs/download.png"> Download
-        </button>
-        <button class="action-btn" onclick="copyStreamLink()">
-            <img src="https://i.ibb.co/RTH4vkB5/copy-link.png"> Copy Link
-        </button>
-        <button class="action-btn" onclick="vlc_player()">
-            <img src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
-        </button>
-        <button class="action-btn" onclick="mx_player()">
-            <img src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
-        </button>
-    </div>
+<div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
+
+<!-- ACTION BUTTONS -->
+<div class="downloadBtn"
+     style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:25px;">
+    <button onclick="streamDownload()">
+        <img style="height:22px;" src="https://i.ibb.co/D6CnBqs/download.png"> Download
+    </button>
+    <button onclick="copyStreamLink()">
+        <img style="height:22px;" src="https://i.ibb.co/RTH4vkB5/copy-link.png"> Copy Link
+    </button>
+    <button onclick="vlc_player()">
+        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
+    </button>
+    <button onclick="mx_player()">
+        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
+    </button>
+</div>
 
 </div>
 
 <script>
 const video = document.getElementById("player");
-const playerContainer = document.getElementById("playerContainer");
-const fadeControls = document.querySelectorAll(".fade-controls");
-const playPauseIcon = document.getElementById("playPauseIcon");
-const loadingOverlay = document.getElementById("loadingOverlay");
-let hlsInstance;
+const leftSkip = document.querySelector(".left-skip");
+const rightSkip = document.querySelector(".right-skip");
 let hideTimeout;
 
+/* ⭐ FINAL CLEAN FILE NAME FUNCTION */
 function cleanFileName(name) {
     if (!name) return "Unknown File";
+
     name = name.trim();
-    name = name.replace(new RegExp("(\\.(mkv|mp4|avi|mov|wmv|flv)).*$", "i"), "$1");
-    name = name.replace(new RegExp("^@[\\w_]+(\\s*-\\s*)*", "i"), "").trim();
-    name = name.replace(new RegExp("^@[\\w_]+-"), "").trim();
-    name = name.replace(new RegExp("^[^\\w(]+"), "").trim();
-    if (name.toLowerCase().includes(".mkv")) name = name.split(/\.mkv/i)[0] + ".mkv";
-    if (name.toLowerCase().includes(".mp4")) name = name.split(/\.mp4/i)[0] + ".mp4";
+
+    // 1. Remove everything after video extension
+    name = name.replace(/(\.(mkv|mp4|avi|mov|wmv|flv)).*$/i, "$1");
+
+    // 2. Remove @Channel -   or   @Channel - -
+    name = name.replace(/^@[\w_]+(\s*-\s*)*/i, "").trim();
+
+    // 3. Remove @Channel-FileName
+    name = name.replace(/^@[\w_]+-/, "").trim();
+
+    // 4. Remove emojis / weird symbols from start
+    name = name.replace(/^[^\w(]+/, "").trim();
+
+    // 5. Fix duplicate filenames joined accidentally
+    if (name.toLowerCase().includes(".mkv"))
+        name = name.split(/\.mkv/i)[0] + ".mkv";
+
+    if (name.toLowerCase().includes(".mp4"))
+        name = name.split(/\.mp4/i)[0] + ".mp4";
+
     return name.trim();
 }
 
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-const hlsUrl = `/hls/{{path}}/manifest.m3u8`;
-if (Hls.isSupported()) {
-    hlsInstance = new Hls();
-    hlsInstance.loadSource(hlsUrl);
-    hlsInstance.attachMedia(video);
-
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
-        loadingOverlay.style.opacity = "0";
-        setTimeout(() => loadingOverlay.style.display = "none", 400);
-
-        const audioSelect = document.getElementById("audioSelect");
-        if (hlsInstance.audioTracks.length > 0) {
-            audioSelect.innerHTML = "";
-            hlsInstance.audioTracks.forEach((track, index) => {
-                let opt = document.createElement("option");
-                opt.value = index;
-                opt.text = track.name || track.language || `Audio Track ${index + 1}`;
-                audioSelect.appendChild(opt);
-            });
-            audioSelect.value = hlsInstance.audioTrack;
-        }
-
-        const subSelect = document.getElementById("subSelect");
-        if (hlsInstance.subtitleTracks.length > 0) {
-            subSelect.innerHTML = '<option value="-1">Off</option>';
-            hlsInstance.subtitleTracks.forEach((sub, index) => {
-                let opt = document.createElement("option");
-                opt.value = index;
-                opt.text = sub.name || sub.language || `Subtitle ${index + 1}`;
-                subSelect.appendChild(opt);
-            });
-            subSelect.value = hlsInstance.subtitleTrack;
-        }
-    });
-} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = hlsUrl;
-    video.addEventListener('loadedmetadata', () => {
-        loadingOverlay.style.opacity = "0";
-        setTimeout(() => loadingOverlay.style.display = "none", 400);
-    });
-}
-
-function switchAudioTrack(index) {
-    if (hlsInstance) {
-        hlsInstance.audioTrack = parseInt(index);
-    }
-}
-
-function switchSubtitleTrack(index) {
-    if (hlsInstance) {
-        hlsInstance.subtitleTrack = parseInt(index);
-    }
-}
-
-function showControls() {
-    fadeControls.forEach(el => el.classList.remove("hide-controls"));
-    clearTimeout(hideTimeout);
-    if (!video.paused) hideTimeout = setTimeout(hideControls, 5000);
-}
-
-function hideControls() {
-    if (video.paused) return; 
-    fadeControls.forEach(el => el.classList.add("hide-controls"));
-}
-
-playerContainer.addEventListener("mousemove", showControls);
-playerContainer.addEventListener("touchstart", showControls);
-playerContainer.addEventListener("click", showControls);
-
-video.addEventListener("play", () => {
-    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+/* --- 10-second skip functions --- */
+function skipBack() {
+    video.currentTime = Math.max(0, video.currentTime - 10);
     showControls();
-});
+}
+function skipForward() {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    showControls();
+}
 
+/* --- Show controls --- */
+function showControls() {
+    leftSkip.classList.remove("hide-controls");
+    rightSkip.classList.remove("hide-controls");
+
+    clearTimeout(hideTimeout);
+    if (!video.paused)
+        hideTimeout = setTimeout(hideControls, 5000);
+}
+
+/* --- Hide controls --- */
+function hideControls() {
+    if (video.paused) return;
+    leftSkip.classList.add("hide-controls");
+    rightSkip.classList.add("hide-controls");
+}
+
+/* --- Events --- */
+video.addEventListener("mousemove", showControls);
+video.addEventListener("touchstart", showControls);
+video.addEventListener("click", showControls);
+
+video.addEventListener("play", () => showControls());
 video.addEventListener("pause", () => {
-    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    showControls(); 
+    leftSkip.classList.remove("hide-controls");
+    rightSkip.classList.remove("hide-controls");
 });
 
-function togglePlay() { video.paused ? video.play() : video.pause(); }
-function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); showControls(); }
-function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); showControls(); }
-
+/* DOWNLOAD + COPY */
 function streamDownload(){
     let url = window.location.href.replace("/watch/", "/dl/").replace("/view/", "/dl/");
     alert("⬇️ Download Starting!"); 
@@ -412,13 +212,17 @@ function copyStreamLink(){
     navigator.clipboard.writeText(window.location.href);
     alert("🔗 Link Copied!");
 }
+
+/* MX & VLC */
 function mx_player(){
     var url = "{{file_url}}";
-    window.location.href = `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent("{{file_name}}")};end`;
+    window.location.href =
+    `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent("{{file_name}}")};end`;
 }
 function vlc_player(){
     var url = "{{file_url}}";
-    window.location.href = `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title=${encodeURIComponent("{{file_name}}")};end`;
+    window.location.href =
+    `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title=${encodeURIComponent("{{file_name}}")};end`;
 }
 </script>
 
