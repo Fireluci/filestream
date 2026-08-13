@@ -12,6 +12,11 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&display=swap');
 
+:root {
+    --brand-green: #1db954;
+    --brand-green-glow: rgba(29, 185, 84, 0.4);
+}
+
 body {
     margin: 0;
     font-family: 'Josefin Sans', sans-serif;
@@ -39,118 +44,176 @@ nav {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-nav h3 { font-size: 24px; font-weight: 700; color: #ffcc00; letter-spacing: 1px; }
+nav h3 { font-size: 24px; font-weight: 700; color: var(--brand-green); letter-spacing: 1px; }
 
 .main-container {
     width: 100%;
-    max-width: 950px;
+    max-width: 900px;
     margin: 25px auto;
     padding: 0 15px;
 }
 
+.player-card {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* Strict 18:9 Video Box (Contains video and internal vertical volume slider) */
 .video-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 18 / 9;
     background: #000;
-    border-radius: 14px;
+    border-radius: 16px 16px 0 0;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(29, 185, 84, 0.3);
+    border-bottom: none;
 }
 
 video {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    display: block;
 }
 
-.fade-controls {
-    opacity: 1;
-    transition: opacity 0.35s ease;
-}
-
-.hide-controls {
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-.skip-btn {
+/* Top-Left Watermark Badge */
+.player-badge {
     position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--brand-green);
+    color: #0b0f19;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--brand-green-glow);
+    z-index: 10;
+}
+
+/* Vertical Volume Slider pinned inside the right inner edge of the video */
+.vertical-volume-container {
+    position: absolute;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(11, 15, 25, 0.75);
+    border: 1px solid rgba(29, 185, 84, 0.4);
+    padding: 12px 6px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    z-index: 20;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.vertical-slider {
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    width: 8px;
+    height: 90px;
+    accent-color: var(--brand-green);
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
-    width: 52px;
-    height: 52px;
+    margin-bottom: 8px;
+}
+
+.volume-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(6px);
-    z-index: 10;
-    transition: background 0.2s, transform 0.2s;
+    padding: 0;
 }
-.skip-btn:hover {
-    background: rgba(255, 204, 0, 0.85);
-    border-color: #ffcc00;
-    transform: translateY(-50%) scale(1.1);
-}
-.left-skip { left: 5%; }
-.right-skip { right: 5%; }
+.volume-icon-btn svg { width: 20px; height: 20px; fill: var(--brand-green); }
 
-.center-play-btn {
+/* Separate Control Bar Below Video (Independent layout) */
+.control-bar {
+    background: rgba(11, 15, 25, 0.9);
+    border: 2px solid rgba(29, 185, 84, 0.3);
+    border-top: 1px solid rgba(29, 185, 84, 0.2);
+    border-radius: 0 0 16px 16px;
+    padding: 14px 18px;
+    backdrop-filter: blur(12px);
+}
+
+/* Progress Track */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    position: relative;
+}
+.progress-bar {
+    height: 100%;
+    background: var(--brand-green);
+    width: 0%;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 0 10px var(--brand-green-glow);
+}
+.progress-bar::after {
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    right: -6px;
+    top: -4px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
     border-radius: 50%;
-    width: 72px;
-    height: 72px;
-    cursor: pointer;
-    backdrop-filter: blur(6px);
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+/* Controls Buttons Row */
+.controls-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ctrl-btn {
+    background: rgba(29, 185, 84, 0.3);
+    border: 1px solid rgba(29, 185, 84, 0.5);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
-.center-play-btn:hover {
-    background: rgba(255, 204, 0, 0.85);
-    border-color: #ffcc00;
-    transform: translate(-50%, -50%) scale(1.1);
+.ctrl-btn:hover {
+    background: var(--brand-green);
+    color: #0b0f19;
+    transform: scale(1.08);
+    box-shadow: 0 4px 15px var(--brand-green-glow);
 }
+.ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-/* Toast Notification */
-#toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: rgba(20, 25, 40, 0.9);
-    border: 1px solid rgba(255, 204, 0, 0.3);
-    color: #fff;
-    padding: 10px 22px;
-    border-radius: 30px;
+.time-display {
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    backdrop-filter: blur(10px);
-    z-index: 100;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-#toast.show {
-    transform: translateX(-50%) translateY(0);
+    color: #e2e8f0;
+    margin-left: 8px;
+    margin-right: auto;
 }
 
+/* File Meta & Action Buttons */
 .file-meta-box {
     text-align: center;
     margin-top: 18px;
     background: rgba(20, 25, 40, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(29, 185, 84, 0.2);
     padding: 12px 18px;
     border-radius: 10px;
     backdrop-filter: blur(8px);
@@ -172,7 +235,7 @@ video {
 
 .action-btn {
     background: linear-gradient(135deg, #1e2530 0%, #151a23 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(29, 185, 84, 0.3);
     padding: 11px 20px;
     border-radius: 10px;
     font-size: 13px;
@@ -186,17 +249,27 @@ video {
     transition: all 0.25s ease;
 }
 .action-btn:hover {
-    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
+    background: var(--brand-green);
     color: #0b0f19;
-    border-color: #ffcc00;
+    border-color: var(--brand-green);
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(255, 204, 0, 0.25);
+    box-shadow: 0 6px 18px var(--brand-green-glow);
 }
-.action-btn img {
-    height: 18px;
-    width: 18px;
-    object-fit: contain;
+.action-btn img { height: 18px; width: 18px; object-fit: contain; }
+
+/* Toast Notification */
+#toast {
+    position: fixed;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(20, 25, 40, 0.95);
+    border: 1px solid var(--brand-green);
+    color: #fff; padding: 10px 22px; border-radius: 30px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px); z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+#toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 
@@ -206,27 +279,57 @@ video {
 
 <div class="main-container">
 
-    <div class="video-wrapper" id="playerContainer">
-        <video id="player"
-            src="{{file_url}}"
-            playsinline
-            controls
-            width="100%">
-        </video>
+    <div class="player-card">
+        
+        <!-- 18:9 Video Wrapper (Contains video, badge, and internal vertical volume control) -->
+        <div class="video-wrapper" id="playerContainer">
+            <div class="player-badge">19</div>
+            <video id="player" src="{{file_url}}" playsinline></video>
 
-        <div id="centerPlayBtn" class="center-play-btn fade-controls" onclick="togglePlay()">
-            <svg id="playPauseIcon" viewBox="0 0 24 24" width="30" height="30" fill="#fff">
-                <path d="M8 5v14l11-7z"/>
-            </svg>
+            <div class="vertical-volume-container">
+                <input type="range" min="0" max="1" step="0.05" value="1" class="vertical-slider" id="volumeSlider" oninput="setVolume(this.value)">
+                <button class="volume-icon-btn" onclick="toggleMute()">
+                    <svg id="volumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                </button>
+            </div>
         </div>
 
-        <div class="skip-btn left-skip fade-controls" onclick="skipBack()" title="Rewind 10s">
-            <img src="https://i.ibb.co/S70cgrW5/backward.png" width="24">
+        <!-- Separate Bottom Control Bar -->
+        <div class="control-bar">
+            <div class="progress-container" id="progressContainer" onclick="seekVideo(event)">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="controls-buttons">
+                <!-- Stop Button -->
+                <button class="ctrl-btn" onclick="stopVideo()" title="Stop">
+                    <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                </button>
+
+                <!-- Dynamic Play / Pause Button -->
+                <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">
+                    <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+
+                <!-- Rewind 10s -->
+                <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
+                    <svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1 5v4l3-2-3-2z"/></svg>
+                </button>
+
+                <!-- Forward 10s -->
+                <button class="ctrl-btn" onclick="skipForward()" title="Forward 10s">
+                    <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8zm1 5v4l-3-2 3-2z"/></svg>
+                </button>
+
+                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+
+                <!-- Fullscreen Button -->
+                <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">
+                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+            </div>
         </div>
 
-        <div class="skip-btn right-skip fade-controls" onclick="skipForward()" title="Forward 10s">
-            <img src="https://i.ibb.co/N252Lk5Y/forward.png" width="24">
-        </div>
     </div>
 
     <div class="file-meta-box">
@@ -235,31 +338,32 @@ video {
 
     <div class="action-buttons-grid">
         <button class="action-btn" onclick="streamDownload()">
-            <img src="https://i.ibb.co/D6CnBqs/download.png" alt="Download"> Download
+            <img src="https://i.ibb.co/D6CnBqs/download.png"> Download
         </button>
         <button class="action-btn" onclick="copyStreamLink()">
-            <img src="https://i.ibb.co/RTH4vkB5/copy-link.png" alt="Copy Link"> Copy Link
+            <img src="https://i.ibb.co/RTH4vkB5/copy-link.png"> Copy Link
         </button>
         <button class="action-btn" onclick="vlc_player()">
-            <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="VLC"> VLC Player
+            <img src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
         </button>
         <button class="action-btn" onclick="mx_player()">
-            <img src="https://i.ibb.co/41WvtQ3/mx.png" alt="MX"> MX Player
+            <img src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
         </button>
     </div>
 
 </div>
 
-<!-- Modern Toast Element -->
 <div id="toast">Notification message</div>
 
 <script>
 const video = document.getElementById("player");
 const playerContainer = document.getElementById("playerContainer");
-const fadeControls = document.querySelectorAll(".fade-controls");
 const playPauseIcon = document.getElementById("playPauseIcon");
+const progressBar = document.getElementById("progressBar");
+const timeDisplay = document.getElementById("timeDisplay");
+const volumeSlider = document.getElementById("volumeSlider");
+const volumeIcon = document.getElementById("volumeIcon");
 const toast = document.getElementById("toast");
-let hideTimeout;
 
 function showToast(message) {
     toast.innerText = message;
@@ -274,101 +378,121 @@ function cleanFileName(name) {
     name = name.replace(/^@[\w_]+(\s*-\\s*)*/i, "").trim();
     name = name.replace(/^@[\w_]+-/, "").trim();
     name = name.replace(/^[^\w(]+/, "").trim();
-    if (name.toLowerCase().includes(".mkv"))
-        name = name.split(/\.mkv/i)[0] + ".mkv";
-    if (name.toLowerCase().includes(".mp4"))
-        name = name.split(/\.mp4/i)[0] + ".mp4";
     return name.trim();
 }
-
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* --- Control Auto-Hide (3 seconds) --- */
-function showControls() {
-    fadeControls.forEach(el => el.classList.remove("hide-controls"));
-    clearTimeout(hideTimeout);
-    if (!video.paused) {
-        hideTimeout = setTimeout(hideControls, 3000);
+/* --- Play / Pause State Toggle --- */
+function togglePlay() {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
     }
 }
 
-function hideControls() {
-    if (video.paused) return; 
-    fadeControls.forEach(el => el.classList.add("hide-controls"));
+function stopVideo() {
+    video.pause();
+    video.currentTime = 0;
 }
-
-playerContainer.addEventListener("mousemove", showControls);
-playerContainer.addEventListener("touchstart", showControls);
-playerContainer.addEventListener("click", showControls);
 
 video.addEventListener("play", () => {
     playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-    showControls();
 });
 
 video.addEventListener("pause", () => {
     playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    fadeControls.forEach(el => el.classList.remove("hide-controls"));
-    clearTimeout(hideTimeout);
 });
 
-/* --- Keyboard Shortcuts & Double Click Fullscreen --- */
-document.addEventListener("keydown", (e) => {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-    if (e.code === "Space") {
-        e.preventDefault();
-        togglePlay();
-    } else if (e.code === "ArrowRight") {
-        skipForward();
-    } else if (e.code === "ArrowLeft") {
-        skipBack();
-    } else if (e.code === "KeyF") {
-        if (!document.fullscreenElement) {
-            playerContainer.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen();
-        }
+/* --- Time & Progress --- */
+video.addEventListener("timeupdate", () => {
+    if (video.duration) {
+        const percent = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = percent + "%";
+        timeDisplay.innerText = formatTime(video.currentTime) + " / " + formatTime(video.duration);
     }
 });
 
-playerContainer.addEventListener("dblclick", () => {
+function formatTime(seconds) {
+    let m = Math.floor(seconds / 60);
+    let s = Math.floor(seconds % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+function seekVideo(e) {
+    const rect = document.getElementById("progressContainer").getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    video.currentTime = pos * video.duration;
+}
+
+function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); }
+function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); }
+
+/* --- Volume Controls --- */
+function setVolume(val) {
+    video.volume = val;
+    video.muted = (val == 0);
+    updateVolumeIcon(val);
+}
+
+function toggleMute() {
+    if (video.volume > 0) {
+        video.dataset.lastVol = video.volume;
+        video.volume = 0;
+        volumeSlider.value = 0;
+        updateVolumeIcon(0);
+    } else {
+        let prev = video.dataset.lastVol || 1;
+        video.volume = prev;
+        volumeSlider.value = prev;
+        updateVolumeIcon(prev);
+    }
+}
+
+function updateVolumeIcon(val) {
+    if (val == 0) {
+        volumeIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+    } else {
+        volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+    }
+}
+
+/* --- Fullscreen --- */
+function toggleFullscreen() {
     if (!document.fullscreenElement) {
         playerContainer.requestFullscreen().catch(() => {});
     } else {
         document.exitFullscreen();
     }
+}
+
+playerContainer.addEventListener("dblclick", toggleFullscreen);
+
+/* --- Keyboard Shortcuts --- */
+document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    if (e.code === "Space") { e.preventDefault(); togglePlay(); }
+    else if (e.code === "ArrowRight") { skipForward(); }
+    else if (e.code === "ArrowLeft") { skipBack(); }
+    else if (e.code === "KeyF") { toggleFullscreen(); }
+    else if (e.code === "KeyM") { toggleMute(); }
 });
 
-function togglePlay() {
-    if (video.paused) video.play();
-    else video.pause();
-}
-
-function skipBack() {
-    video.currentTime = Math.max(0, video.currentTime - 10);
-    showControls();
-}
-function skipForward() {
-    video.currentTime = Math.min(video.duration, video.currentTime + 10);
-    showControls();
-}
-
-function streamDownload(){
+/* --- Actions --- */
+function streamDownload() {
     let url = window.location.href.replace("/watch/", "/dl/").replace("/view/", "/dl/");
     showToast("⬇️ Download Starting...");
     window.location.href = url;
 }
-function copyStreamLink(){
+function copyStreamLink() {
     navigator.clipboard.writeText(window.location.href);
     showToast("🔗 Link Copied to Clipboard!");
 }
-
-function mx_player(){
+function mx_player() {
     var url = "{{file_url}}";
     window.location.href = `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent("{{file_name}}")};end`;
 }
-
-function vlc_player(){
+function vlc_player() {
     var url = "{{file_url}}";
     window.location.href = `intent:${encodeURIComponent(url)}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title=${encodeURIComponent("{{file_name}}")};end`;
 }
