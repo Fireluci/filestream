@@ -73,7 +73,7 @@ async def hls_manifest_handler(request: web.Request):
     os.makedirs(output_dir, exist_ok=True)
     manifest_path = os.path.join(output_dir, "index.m3u8")
     
-    if not os.path.exists(manifest_path):
+    if not os.path.exists(manifest_path) or os.path.getsize(manifest_path) == 0:
         ffmpeg_cmd = [
             "ffmpeg", "-i", file_url,
             "-map", "0:v:0", 
@@ -90,6 +90,12 @@ async def hls_manifest_handler(request: web.Request):
         ]
         subprocess.Popen(ffmpeg_cmd)
         
+        # Wait up to 6 seconds for FFmpeg to write the first chunk/manifest
+        for _ in range(60):
+            if os.path.exists(manifest_path) and os.path.getsize(manifest_path) > 0:
+                break
+            await asyncio.sleep(0.1)
+            
     return web.FileResponse(manifest_path)
 
 
