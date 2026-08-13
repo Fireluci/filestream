@@ -8,6 +8,8 @@
 
 <link rel="icon" href="https://i.ibb.co/vxJD4dHK/0e76d1ae7331ca3964dd169b8b5c2f10.jpg" type="image/x-icon">
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Include HLS.js for multi-audio/subtitle track support -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
 body {
@@ -128,7 +130,6 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
 <div style="position: relative;" id="playerContainer">
 
     <video id="player"
-        src="{{file_url}}"
         playsinline
         controls
         width="100%">
@@ -171,10 +172,10 @@ nav h3 { font-size: 26px; font-weight: 700; color: #ffcc00; }
         <img style="height:22px;" src="https://i.ibb.co/RTH4vkB5/copy-link.png"> Copy Link
     </button>
     <button onclick="vlc_player()">
-        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player (Multi-Audio)
+        <img style="height:22px;" src="https://i.ibb.co/px6fQs1/vlc.png"> VLC Player
     </button>
     <button onclick="mx_player()">
-        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player (Multi-Audio)
+        <img style="height:22px;" src="https://i.ibb.co/41WvtQ3/mx.png"> MX Player
     </button>
 </div>
 
@@ -204,11 +205,20 @@ function cleanFileName(name) {
 
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
+/* --- Attach HLS Manifest Route --- */
+const hlsUrl = `/hls/{{path}}/manifest.m3u8`;
+if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
+} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = hlsUrl;
+}
+
 /* --- Control Auto-Hide / Show Logic --- */
 function showControls() {
     fadeControls.forEach(el => el.classList.remove("hide-controls"));
     clearTimeout(hideTimeout);
-    
     if (!video.paused) {
         hideTimeout = setTimeout(hideControls, 5000);
     }
@@ -233,7 +243,6 @@ video.addEventListener("pause", () => {
     showControls(); 
 });
 
-/* --- Center Play / Pause Logic --- */
 function togglePlay() {
     if (video.paused) {
         video.play();
@@ -242,7 +251,6 @@ function togglePlay() {
     }
 }
 
-/* --- 10-second skip functions --- */
 function skipBack() {
     video.currentTime = Math.max(0, video.currentTime - 10);
     showControls();
