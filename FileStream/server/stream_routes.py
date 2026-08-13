@@ -3,6 +3,8 @@ import math
 import logging
 import mimetypes
 import traceback
+import os
+import subprocess
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from FileStream.bot import multi_clients, work_loads, FileStream
@@ -45,7 +47,7 @@ async def stream_handler(request: web.Request):
 
 
 @routes.get("/dl/{path}", allow_head=True)
-async def stream_handler(request: web.Request):
+async def dl_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         return await media_streamer(request, path)
@@ -61,6 +63,36 @@ async def stream_handler(request: web.Request):
         logging.debug(traceback.format_exc())
         raise web.HTTPInternalServerError(text=str(e))
 
+
+@routes.get("/hls/{path}/manifest.m3u8", allow_head=True)
+async def hls_manifest_handler(request: web.Request):
+    path = request.match_info["path"]
+    file_url = f"http://{request.host}/dl/{path}"
+    
+    output_dir = f"/tmp/hls_{path}"
+    os.makedirs(output_dir, exist_ok=True)
+    manifest_path = os.path.join(output_dir, "index.m3u8")
+    
+    if not os.path.exists(manifest_path):
+        ffmpeg_cmd = [
+            "ffmpeg", "-i", file_url,
+            "-map", "0:v:0", 
+            "-map", "0:a?", 
+            "-map", "0:s?", 
+            "-c:v", "copy",  
+            "-c:a", "aac",   
+            "-c:s", "webvtt",
+            "-f", "hls",
+            "-hls_time", "4",
+            "-hls_list_size", "0",
+            "-hls_segment_filename", os.path.join(output_dir, "seg_%3d.ts"),
+            manifest_path
+        ]
+        subprocess.Popen(ffmpeg_cmd)
+        
+    return web.FileResponse(manifest_path)
+
+
 class_cache = {}
 
 async def media_streamer(request: web.Request, db_id: str):
@@ -74,15 +106,11 @@ async def media_streamer(request: web.Request, db_id: str):
 
     if faster_client in class_cache:
         tg_connect = class_cache[faster_client]
-        logging.debug(f"Using cached ByteStreamer object for client {index}")
     else:
-        logging.debug(f"Creating new ByteStreamer object for client {index}")
         tg_connect = utils.ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
-    logging.debug("before calling get_file_properties")
+
     file_id = await tg_connect.get_file_properties(db_id, multi_clients)
-    logging.debug("after calling get_file_properties")
-    
     file_size = file_id.file_size
 
     if range_header:
@@ -119,9 +147,6 @@ async def media_streamer(request: web.Request, db_id: str):
 
     if not mime_type:
         mime_type = mimetypes.guess_type(file_name)[0] or "application/octet-stream"
-
-    # if "video/" in mime_type or "audio/" in mime_type:
-    #     disposition = "inline"
 
     return web.Response(
         status=206 if range_header else 200,
