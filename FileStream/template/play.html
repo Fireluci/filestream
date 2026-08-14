@@ -12,11 +12,6 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&display=swap');
 
-:root {
-    --brand-green: #1db954;
-    --brand-green-glow: rgba(29, 185, 84, 0.4);
-}
-
 body {
     margin: 0;
     font-family: 'Josefin Sans', sans-serif;
@@ -44,7 +39,7 @@ nav {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-nav h3 { font-size: 24px; font-weight: 700; color: var(--brand-green); letter-spacing: 1px; }
+nav h3 { font-size: 24px; font-weight: 700; color: #1db954; letter-spacing: 1px; }
 
 .main-container {
     width: 100%;
@@ -79,7 +74,7 @@ video {
     display: block;
 }
 
-/* Audio Controller Auto-Hide Transition (5s Inactivity Rule) */
+/* Audio Controller Auto-Hide (5s Inactivity Rule) */
 .audio-fade {
     opacity: 1;
     transition: opacity 0.35s ease;
@@ -90,7 +85,7 @@ video {
     pointer-events: none !important;
 }
 
-/* Vertical Volume Slider pinned inside right inner edge of video (Using 2nd image style: Green Capsule Track) */
+/* Vertical Volume Slider (Using exact orange track style from Image 2: #ff5722 theme with handle) */
 .vertical-volume-container {
     position: absolute;
     right: 15px;
@@ -99,44 +94,40 @@ video {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: rgba(11, 15, 25, 0.85);
-    border: 1px solid rgba(29, 185, 84, 0.4);
-    padding: 14px 8px;
-    border-radius: 30px;
-    backdrop-filter: blur(8px);
     z-index: 20;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
 }
 
 .vertical-slider {
     writing-mode: bt-lr;
     -webkit-appearance: slider-vertical;
-    width: 10px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    accent-color: var(--brand-green);
+    width: 12px;
+    height: 110px;
+    accent-color: #ff5722;
     cursor: pointer;
     margin-bottom: 10px;
+    background: linear-gradient(to top, #ff5722 100%, #e0e0e0 100%);
+    border-radius: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .volume-icon-btn {
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(29, 185, 84, 0.4);
+    background: #111;
+    border: 1px solid rgba(255, 87, 34, 0.5);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
-.volume-icon-btn:hover { background: var(--brand-green); border-color: var(--brand-green); }
-.volume-icon-btn svg { width: 18px; height: 18px; fill: var(--brand-green); }
-.volume-icon-btn:hover svg { fill: #0b0f19; }
+.volume-icon-btn:hover { background: #ff5722; border-color: #ff5722; }
+.volume-icon-btn svg { width: 18px; height: 18px; fill: #ff5722; }
+.volume-icon-btn:hover svg { fill: #fff; }
 
-/* Separate Control Bar Below Video (Permanently Visible) */
+/* Separate Control Bar Below Video */
 .control-bar {
     background: rgba(11, 15, 25, 0.9);
     border: 2px solid rgba(29, 185, 84, 0.3);
@@ -146,75 +137,75 @@ video {
     backdrop-filter: blur(12px);
 }
 
-/* Progress Track */
+/* Progress Track (Using exact blue slider track style from Image 2: #0084ff) */
 .progress-container {
     width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
     cursor: pointer;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     position: relative;
     touch-action: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 .progress-bar {
     height: 100%;
-    background: var(--brand-green);
+    background: #0084ff;
     width: 0%;
-    border-radius: 4px;
+    border-radius: 5px;
     position: relative;
-    box-shadow: 0 0 10px var(--brand-green-glow);
     pointer-events: none;
 }
 .progress-bar::after {
     content: '';
     position: absolute;
-    right: -6px;
-    top: -3px;
-    width: 14px;
-    height: 14px;
+    right: -7px;
+    top: -4px;
+    width: 18px;
+    height: 18px;
     background: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 /* Controls Buttons Row */
 .controls-buttons {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
-/* Round Circular Buttons matching Image 1 Design */
+/* Round Inverted Buttons (Black is White: White background with black clean crisp graphics matching exact SVG requests) */
 .ctrl-btn {
-    background: #000000;
-    border: 1px solid rgba(29, 185, 84, 0.4);
-    color: #fff;
-    width: 40px;
-    height: 40px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    color: #000000;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 .ctrl-btn:hover {
-    background: var(--brand-green);
-    color: #0b0f19;
-    border-color: var(--brand-green);
+    background: #1db954;
+    color: #fff;
+    border-color: #1db954;
     transform: scale(1.08);
-    box-shadow: 0 4px 15px var(--brand-green-glow);
 }
-.ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.ctrl-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
 .time-display {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: #e2e8f0;
-    margin-left: 8px;
+    margin-left: 6px;
     margin-right: auto;
+    letter-spacing: 0.5px;
 }
 
 /* File Meta & Action Buttons */
@@ -258,11 +249,10 @@ video {
     transition: all 0.25s ease;
 }
 .action-btn:hover {
-    background: var(--brand-green);
+    background: #1db954;
     color: #0b0f19;
-    border-color: var(--brand-green);
+    border-color: #1db954;
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px var(--brand-green-glow);
 }
 .action-btn img { height: 18px; width: 18px; object-fit: contain; }
 
@@ -272,7 +262,7 @@ video {
     bottom: 30px; left: 50%;
     transform: translateX(-50%) translateY(100px);
     background: rgba(20, 25, 40, 0.95);
-    border: 1px solid var(--brand-green);
+    border: 1px solid #1db954;
     color: #fff; padding: 10px 22px; border-radius: 30px;
     font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     backdrop-filter: blur(10px); z-index: 100;
@@ -290,7 +280,7 @@ video {
 
     <div class="player-card">
         
-        <!-- 18:9 Video Wrapper with Internal Auto-Hiding Audio Controller & Click-to-Play -->
+        <!-- 18:9 Video Wrapper with Internal Streamlined Orange Volume Controller & Click-to-Play -->
         <div class="video-wrapper" id="playerContainer" onclick="handleVideoClick(event)">
             <video id="player" src="{{file_url}}" playsinline></video>
 
@@ -302,31 +292,39 @@ video {
             </div>
         </div>
 
-        <!-- Separate Bottom Control Bar (Permanently Visible) -->
+        <!-- Separate Bottom Control Bar (Order: 10s Backward -> Play/Pause -> 10s Forward -> Duration -> Fullscreen) -->
         <div class="control-bar" id="controlBar">
             <div class="progress-container" id="progressContainer">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
             <div class="controls-buttons">
-                <!-- Play/Pause Button (Circular Style from Image 1) -->
+                <!-- 10s Backward Button (Exact Inverted Circular style with Reflected Arrow pointing left + '10') -->
+                <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2.5-11.5v7h-1.5v-7h1.5zm6.5 0v7h-1.5v-2.5h-2v2.5h-1.5v-7h1.5v2.5h2v-2.5h1.5z" fill="none"/>
+                        <!-- Reflected 10-Second Loop SVG Graphic Path matching exact forward reference -->
+                        <path d="M18.85 7.15L16 10h4V6l-1.15 1.15C17.53 5.82 14.94 5 12 5 7.58 5 4 8.58 4 13s3.58 8 8 8c3.7 0 6.81-2.53 7.74-5.92h-2.08c-.85 2.45-3.18 4.22-5.66 4.22-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78l-3.37 3.37h7.22V4l-2.02 3.15z"/>
+                        <text x="8.5" y="16.5" font-size="8" font-weight="bold" fill="#000" font-family="sans-serif">10</text>
+                    </svg>
+                </button>
+
+                <!-- Play/Pause Button (Circular Inverted Style) -->
                 <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">
                     <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </button>
 
-                <!-- Rewind 10s (Using Rewind 10s Circular Button from Image 1) -->
-                <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
-                    <svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1 5v4l3-2-3-2z"/></svg>
-                </button>
-
-                <!-- Forward 10s (Using Forward 10s Circular Button from Image 1) -->
+                <!-- 10s Forward Button (Exact Inverted Circular style matching forward-10.jpg reference) -->
                 <button class="ctrl-btn" onclick="skipForward()" title="Forward 10s">
-                    <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8zm1 5v4l-3-2 3-2z"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M5.15 7.15L8 10H4V6l1.15 1.15C6.47 5.82 9.06 5 12 5c4.42 0 8 3.58 8 8s-3.58 8-8 8c-3.7 0-6.81-2.53-7.74-5.92h2.08c.85 2.45 3.18 4.22 5.66 4.22 3.31 0 6-2.69 6-6s-2.69-6-6-6c-1.66 0-3.14.69-4.22 1.78l3.37 3.37H4V4l1.15 3.15z"/>
+                        <text x="8.5" y="16.5" font-size="8" font-weight="bold" fill="#000" font-family="sans-serif">10</text>
+                    </svg>
                 </button>
 
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
 
-                <!-- Fullscreen Button (Circular Style from Image 1) -->
+                <!-- Fullscreen Button -->
                 <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">
                     <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                 </button>
@@ -428,7 +426,7 @@ video.addEventListener("pause", () => {
     clearTimeout(hideTimeout);
 });
 
-/* --- Time & Progress Bar Scrubbing --- */
+/* --- Progress Bar Scrubbing --- */
 video.addEventListener("timeupdate", () => {
     if (video.duration && !isNaN(video.duration)) {
         const percent = (video.currentTime / video.duration) * 100;
