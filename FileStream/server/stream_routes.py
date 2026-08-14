@@ -35,16 +35,13 @@ async def root_route_handler(_):
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        # Ensure file_url points to the download/stream route handler
-        file_url = f"{Server.URL}/dl/{path}"
-        return web.Response(text=await render_page(path, file_url=file_url), content_type='text/html')
+        return web.Response(text=await render_page(path), content_type='text/html')
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
     except FIleNotFound as e:
         raise web.HTTPNotFound(text=e.message)
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
-
 
 @routes.get("/dl/{path}", allow_head=True)
 async def stream_handler(request: web.Request):
