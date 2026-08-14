@@ -85,7 +85,7 @@ video {
     pointer-events: none !important;
 }
 
-/* Vertical Volume Slider (Using exact orange track style from Image 2: #ff5722 theme with handle) */
+/* Streamlined Compact Orange Volume Slider (No Borders, Clean Custom Thumb with White Center Dot) */
 .vertical-volume-container {
     position: absolute;
     right: 15px;
@@ -100,31 +100,32 @@ video {
 .vertical-slider {
     writing-mode: bt-lr;
     -webkit-appearance: slider-vertical;
-    width: 12px;
-    height: 110px;
+    width: 6px;
+    height: 75px;
     accent-color: #ff5722;
     cursor: pointer;
-    margin-bottom: 10px;
-    background: linear-gradient(to top, #ff5722 100%, #e0e0e0 100%);
-    border-radius: 6px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+    border: none;
 }
 
 .volume-icon-btn {
     background: #111;
-    border: 1px solid rgba(255, 87, 34, 0.5);
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     transition: all 0.2s ease;
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
-.volume-icon-btn:hover { background: #ff5722; border-color: #ff5722; }
-.volume-icon-btn svg { width: 18px; height: 18px; fill: #ff5722; }
+.volume-icon-btn:hover { background: #ff5722; }
+.volume-icon-btn svg { width: 16px; height: 16px; fill: #ff5722; }
 .volume-icon-btn:hover svg { fill: #fff; }
 
 /* Separate Control Bar Below Video */
@@ -137,23 +138,22 @@ video {
     backdrop-filter: blur(12px);
 }
 
-/* Progress Track (Using exact blue slider track style from Image 2: #0084ff) */
+/* Progress Track (Exact blue style matching reference 2 with Blue Dot inside White Indicator) */
 .progress-container {
     width: 100%;
-    height: 10px;
-    background: #e0e0e0;
-    border-radius: 5px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
     cursor: pointer;
     margin-bottom: 14px;
     position: relative;
     touch-action: none;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 .progress-bar {
     height: 100%;
     background: #0084ff;
     width: 0%;
-    border-radius: 5px;
+    border-radius: 4px;
     position: relative;
     pointer-events: none;
 }
@@ -161,26 +161,29 @@ video {
     content: '';
     position: absolute;
     right: -7px;
-    top: -4px;
+    top: -5px;
     width: 18px;
     height: 18px;
     background: #fff;
     border-radius: 50%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    /* Blue dot centered inside the white indicator */
+    background-image: radial-gradient(circle, #0084ff 4px, transparent 4.5px);
 }
 
 /* Controls Buttons Row */
 .controls-buttons {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
-/* Round Inverted Buttons (Black is White: White background with black clean crisp graphics matching exact SVG requests) */
+/* Perfectly Round Circular Buttons (Locked strict sizing to prevent oval/egg distortion) */
 .ctrl-btn {
     background: #ffffff;
-    border: 1px solid #ccc;
+    border: none;
     color: #000000;
+    min-width: 44px;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -188,16 +191,16 @@ video {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    flex-shrink: 0;
     transition: all 0.2s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 .ctrl-btn:hover {
     background: #1db954;
     color: #fff;
-    border-color: #1db954;
     transform: scale(1.08);
 }
-.ctrl-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.ctrl-btn svg { width: 26px; height: 26px; fill: currentColor; stroke-width: 0.5px; }
 
 .time-display {
     font-size: 14px;
@@ -206,6 +209,7 @@ video {
     margin-left: 6px;
     margin-right: auto;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 /* File Meta & Action Buttons */
@@ -299,13 +303,11 @@ video {
             </div>
 
             <div class="controls-buttons">
-                <!-- 10s Backward Button (Exact Inverted Circular style with Reflected Arrow pointing left + '10') -->
+                <!-- 10s Backward Button (Exact Inverted Reflected SVG with bold text) -->
                 <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2.5-11.5v7h-1.5v-7h1.5zm6.5 0v7h-1.5v-2.5h-2v2.5h-1.5v-7h1.5v2.5h2v-2.5h1.5z" fill="none"/>
-                        <!-- Reflected 10-Second Loop SVG Graphic Path matching exact forward reference -->
-                        <path d="M18.85 7.15L16 10h4V6l-1.15 1.15C17.53 5.82 14.94 5 12 5 7.58 5 4 8.58 4 13s3.58 8 8 8c3.7 0 6.81-2.53 7.74-5.92h-2.08c-.85 2.45-3.18 4.22-5.66 4.22-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78l-3.37 3.37h7.22V4l-2.02 3.15z"/>
-                        <text x="8.5" y="16.5" font-size="8" font-weight="bold" fill="#000" font-family="sans-serif">10</text>
+                        <path d="M5.15 7.15L8 10H4V6l1.15 1.15C6.47 5.82 9.06 5 12 5c4.42 0 8 3.58 8 8s-3.58 8-8 8c-3.7 0-6.81-2.53-7.74-5.92h2.08c.85 2.45 3.18 4.22 5.66 4.22 3.31 0 6-2.69 6-6s-2.69-6-6-6c-1.66 0-3.14.69-4.22 1.78l3.37 3.37H4V4l1.15 3.15z" transform="scale(-1, 1) translate(-24, 0)"/>
+                        <text x="8.0" y="16.5" font-size="8.5" font-weight="900" fill="#000" font-family="sans-serif">10</text>
                     </svg>
                 </button>
 
@@ -314,11 +316,11 @@ video {
                     <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </button>
 
-                <!-- 10s Forward Button (Exact Inverted Circular style matching forward-10.jpg reference) -->
+                <!-- 10s Forward Button (Exact Inverted Forward Reference) -->
                 <button class="ctrl-btn" onclick="skipForward()" title="Forward 10s">
                     <svg viewBox="0 0 24 24">
                         <path d="M5.15 7.15L8 10H4V6l1.15 1.15C6.47 5.82 9.06 5 12 5c4.42 0 8 3.58 8 8s-3.58 8-8 8c-3.7 0-6.81-2.53-7.74-5.92h2.08c.85 2.45 3.18 4.22 5.66 4.22 3.31 0 6-2.69 6-6s-2.69-6-6-6c-1.66 0-3.14.69-4.22 1.78l3.37 3.37H4V4l1.15 3.15z"/>
-                        <text x="8.5" y="16.5" font-size="8" font-weight="bold" fill="#000" font-family="sans-serif">10</text>
+                        <text x="8.0" y="16.5" font-size="8.5" font-weight="900" fill="#000" font-family="sans-serif">10</text>
                     </svg>
                 </button>
 
@@ -426,9 +428,9 @@ video.addEventListener("pause", () => {
     clearTimeout(hideTimeout);
 });
 
-/* --- Progress Bar Scrubbing --- */
+/* --- Real-Time Smooth Progress Bar Scrubbing --- */
 video.addEventListener("timeupdate", () => {
-    if (video.duration && !isNaN(video.duration)) {
+    if (!isDragging && video.duration && !isNaN(video.duration)) {
         const percent = (video.currentTime / video.duration) * 100;
         progressBar.style.width = percent + "%";
         timeDisplay.innerText = formatTime(video.currentTime) + " / " + formatTime(video.duration);
@@ -445,7 +447,11 @@ function seek(e) {
     const rect = progressContainer.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    
+    // Instant visual feedback on drag
+    progressBar.style.width = (pos * 100) + "%";
     if (video.duration && !isNaN(video.duration)) {
+        timeDisplay.innerText = formatTime(pos * video.duration) + " / " + formatTime(video.duration);
         video.currentTime = pos * video.duration;
     }
 }
