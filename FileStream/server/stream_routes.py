@@ -70,8 +70,17 @@ async def media_streamer(request: web.Request, db_id: str):
     faster_client = multi_clients[index]
     
     if Telegram.MULTI_CLIENT:
-        logging.info(f"Client {index} is now serving {request.headers.get('X-FORWARDED-FOR',request.remote)}")
+        logging.info(f"Client {index} is now serving {request.headers.get('X-FORWARDED-FOR', request.remote)}")
 
+    # SELF-HEALING CLIENT CHECK: Ensure client is connected and active
+    try:
+        if not faster_client.is_connected:
+            logging.warning(f"Client {index} was disconnected. Reconnecting automatically...")
+            await faster_client.start()
+    except Exception as e:
+        logging.error(f"Failed to reconnect client {index}: {e}")
+
+    # Check cache and validate client health
     if faster_client in class_cache:
         tg_connect = class_cache[faster_client]
         logging.debug(f"Using cached ByteStreamer object for client {index}")
@@ -81,7 +90,17 @@ async def media_streamer(request: web.Request, db_id: str):
         class_cache[faster_client] = tg_connect
         
     logging.debug("before calling get_file_properties")
-    file_id = await tg_connect.get_file_properties(db_id, multi_clients)
+    try:
+        file_id = await tg_connect.get_file_properties(db_id, multi_clients)
+    except Exception as e:
+        # If the request fails due to a stale connection, clear cache and retry once with a fresh ByteStreamer
+        logging.warning(f"Encountered error with client {index}, clearing cache and refreshing: {e}")
+        if faster_client in class_cache:
+            del class_cache[faster_client]
+        tg_connect = utils.ByteStreamer(faster_client)
+        class_cache[faster_client] = tg_connect
+        file_id = await tg_connect.get_file_properties(db_id, multi_clients)
+        
     logging.debug("after calling get_file_properties")
     
     file_size = file_id.file_size
@@ -105,7 +124,6 @@ async def media_streamer(request: web.Request, db_id: str):
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
-    # Increased chunk size to 2MB for aggressive video buffering
     chunk_size = 2 * 1024 * 1024 
     until_bytes = min(until_bytes, file_size - 1)
 
@@ -122,7 +140,7 @@ async def media_streamer(request: web.Request, db_id: str):
 
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
-    disposition = "inline" # Ensures proper browser inline streaming pipeline
+    disposition = "inline"
 
     if not mime_type:
         mime_type = mimetypes.guess_type(file_name)[0] or "application/octet-stream"
@@ -136,6 +154,6 @@ async def media_streamer(request: web.Request, db_id: str):
             "Content-Length": str(req_length),
             "Content-Disposition": f'{disposition}; filename="{file_name}"',
             "Accept-Ranges": "bytes",
-            "Connection": "keep-alive", # Keeps socket connection open to prevent stalls
+            "Connection": "keep-alive",
         },
     )
