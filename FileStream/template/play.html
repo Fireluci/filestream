@@ -74,6 +74,26 @@ video {
     display: block;
 }
 
+/* ==========================================================
+   LOADING SPINNER OVERLAY (Shows when video is buffering)
+   ========================================================== */
+#loadingSpinner {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px; height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: 4px solid #ff5722;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 15;
+    display: none;
+}
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 /* Audio Controller Auto-Hide (5s Inactivity Rule) */
 .audio-fade {
     opacity: 1;
@@ -85,7 +105,9 @@ video {
     pointer-events: none !important;
 }
 
-/* Streamlined Compact Orange Volume Slider (No Borders, Clean Custom Thumb with White Center Dot) */
+/* ==========================================================
+   VERTICAL VOLUME SLIDER CONTAINER (Orange Theme + White Center Dot)
+   ========================================================== */
 .vertical-volume-container {
     position: absolute;
     right: 15px;
@@ -138,7 +160,9 @@ video {
     backdrop-filter: blur(12px);
 }
 
-/* Progress Track (Exact blue style matching reference 2 with Blue Dot inside White Indicator) */
+/* ==========================================================
+   PROGRESS BAR CONTAINER & INDICATOR (Blue Theme with Center Dot)
+   ========================================================== */
 .progress-container {
     width: 100%;
     height: 8px;
@@ -167,7 +191,6 @@ video {
     background: #fff;
     border-radius: 50%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-    /* Blue dot centered inside the white indicator */
     background-image: radial-gradient(circle, #0084ff 4px, transparent 4.5px);
 }
 
@@ -178,11 +201,13 @@ video {
     gap: 12px;
 }
 
-/* Perfectly Round Circular Buttons (Locked strict sizing to prevent oval/egg distortion) */
+/* ==========================================================
+   GLOBAL CIRCULAR CONTROL BUTTON STYLING (Bold Solid Dark Icons)
+   ========================================================== */
 .ctrl-btn {
-    background: #ffffff;
+    background: #1a1a1a;
     border: none;
-    color: #000000;
+    color: #ffffff;
     min-width: 44px;
     width: 44px;
     height: 44px;
@@ -193,14 +218,14 @@ video {
     cursor: pointer;
     flex-shrink: 0;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 .ctrl-btn:hover {
     background: #1db954;
-    color: #fff;
+    color: #0b0f19;
     transform: scale(1.08);
 }
-.ctrl-btn svg { width: 26px; height: 26px; fill: currentColor; stroke-width: 0.5px; }
+.ctrl-btn svg { width: 28px; height: 28px; fill: currentColor; }
 
 .time-display {
     font-size: 14px;
@@ -284,61 +309,86 @@ video {
 
     <div class="player-card">
         
-        <!-- 18:9 Video Wrapper with Internal Streamlined Orange Volume Controller & Click-to-Play -->
+        <!-- Video Wrapper -->
         <div class="video-wrapper" id="playerContainer" onclick="handleVideoClick(event)">
+            <!-- Loading Spinner Element -->
+            <div id="loadingSpinner"></div>
+
             <video id="player" src="{{file_url}}" playsinline></video>
 
+            <!-- ==========================================================
+               VERTICAL VOLUME SLIDER CONTAINER (Orange Theme + White Center Dot)
+               ========================================================== -->
             <div class="vertical-volume-container audio-fade" id="volumeContainer">
-                <input type="range" min="0" max="1" step="0.05" value="1" class="vertical-slider" id="volumeSlider" oninput="setVolume(this.value)">
+                <input type="range" min="0" max="1" step="0.05" value="1" class="vertical-slider" id="volumeSlider" oninput="setVolume(this.value)" style="background-image: radial-gradient(circle, #fff 3px, transparent 3.5px), linear-gradient(to top, #ff5722 100%, rgba(255,255,255,0.2) 100%);">
                 <button class="volume-icon-btn" onclick="toggleMute(event)" title="Mute/Unmute">
                     <svg id="volumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                 </button>
             </div>
         </div>
 
-        <!-- Separate Bottom Control Bar (Order: 10s Backward -> Play/Pause -> 10s Forward -> Duration -> Fullscreen) -->
+        <!-- Separate Bottom Control Bar -->
         <div class="control-bar" id="controlBar">
+            
+            <!-- ======================================================
+               PROGRESS BAR CONTAINER
+               ====================================================== -->
             <div class="progress-container" id="progressContainer">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
             <div class="controls-buttons">
-                <!-- 10s Backward Button (Exact Inverted Reflected SVG with bold text) -->
+                
+                <!-- ==================================================
+                   1. 10 SECONDS BACKWARD BUTTON
+                   ================================================== -->
                 <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
                     <svg viewBox="0 0 24 24">
-                        <path d="M5.15 7.15L8 10H4V6l1.15 1.15C6.47 5.82 9.06 5 12 5c4.42 0 8 3.58 8 8s-3.58 8-8 8c-3.7 0-6.81-2.53-7.74-5.92h2.08c.85 2.45 3.18 4.22 5.66 4.22 3.31 0 6-2.69 6-6s-2.69-6-6-6c-1.66 0-3.14.69-4.22 1.78l3.37 3.37H4V4l1.15 3.15z" transform="scale(-1, 1) translate(-24, 0)"/>
-                        <text x="8.0" y="16.5" font-size="8.5" font-weight="900" fill="#000" font-family="sans-serif">10</text>
+                        <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93 0-4.42-3.58-8-8-8zm-1.1 9.75v-3.5l-2.2 1.25v-1l2.3-1.3h.9v4.55h-1z" transform="scale(-1, 1) translate(-24, 0)" fill="#fff"/>
+                        <text x="8.0" y="15.5" font-size="7.5" font-weight="900" fill="#fff" font-family="sans-serif">10</text>
                     </svg>
                 </button>
 
-                <!-- Play/Pause Button (Circular Inverted Style) -->
+                <!-- ==================================================
+                   2. PLAY / PAUSE BUTTON
+                   ================================================== -->
                 <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">
-                    <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>
                 </button>
 
-                <!-- 10s Forward Button (Exact Inverted Forward Reference) -->
+                <!-- ==================================================
+                   3. 10 SECONDS FORWARD BUTTON
+                   ================================================== -->
                 <button class="ctrl-btn" onclick="skipForward()" title="Forward 10s">
                     <svg viewBox="0 0 24 24">
-                        <path d="M5.15 7.15L8 10H4V6l1.15 1.15C6.47 5.82 9.06 5 12 5c4.42 0 8 3.58 8 8s-3.58 8-8 8c-3.7 0-6.81-2.53-7.74-5.92h2.08c.85 2.45 3.18 4.22 5.66 4.22 3.31 0 6-2.69 6-6s-2.69-6-6-6c-1.66 0-3.14.69-4.22 1.78l3.37 3.37H4V4l1.15 3.15z"/>
-                        <text x="8.0" y="16.5" font-size="8.5" font-weight="900" fill="#000" font-family="sans-serif">10</text>
+                        <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93 0-4.42-3.58-8-8-8zm-1.1 9.75v-3.5l-2.2 1.25v-1l2.3-1.3h.9v4.55h-1z" fill="#fff"/>
+                        <text x="8.0" y="15.5" font-size="7.5" font-weight="900" fill="#fff" font-family="sans-serif">10</text>
                     </svg>
                 </button>
 
+                <!-- ==================================================
+                   4. VIDEO DURATION TEXT DISPLAY
+                   ================================================== -->
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
 
-                <!-- Fullscreen Button -->
+                <!-- ==================================================
+                   5. FULLSCREEN TOGGLE BUTTON
+                   ================================================== -->
                 <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">
-                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" fill="#fff"/></svg>
                 </button>
+
             </div>
         </div>
 
     </div>
 
+    <!-- File Meta Info Box -->
     <div class="file-meta-box">
         <div class="file-name">[{{file_size}}] <span id="cleanName"></span></div>
     </div>
 
+    <!-- Action Buttons Grid -->
     <div class="action-buttons-grid">
         <button class="action-btn" onclick="streamDownload()">
             <img src="https://i.ibb.co/D6CnBqs/download.png"> Download
@@ -368,6 +418,7 @@ const progressContainer = document.getElementById("progressContainer");
 const timeDisplay = document.getElementById("timeDisplay");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeIcon = document.getElementById("volumeIcon");
+const loadingSpinner = document.getElementById("loadingSpinner");
 const toast = document.getElementById("toast");
 let hideTimeout;
 
@@ -402,6 +453,27 @@ function showAudioController() {
 playerContainer.addEventListener("mousemove", showAudioController);
 playerContainer.addEventListener("touchstart", showAudioController);
 
+/* --- Auto Play on Link Open --- */
+window.addEventListener("DOMContentLoaded", () => {
+    video.play().catch(() => {
+        // Autoplay policy fallback (muted start if blocked)
+        video.muted = true;
+        video.play();
+    });
+});
+
+/* --- Buffering & Loading Spinner Control --- */
+video.addEventListener("waiting", () => {
+    loadingSpinner.style.display = "block";
+    volumeContainer.classList.remove("hide-audio"); // Show audio controller while loading
+});
+video.addEventListener("playing", () => {
+    loadingSpinner.style.display = "none";
+});
+video.addEventListener("canplay", () => {
+    loadingSpinner.style.display = "none";
+});
+
 /* --- Click on Video to Play/Pause --- */
 function handleVideoClick(e) {
     if (e.target.closest('#volumeContainer')) return;
@@ -418,12 +490,12 @@ function togglePlay() {
 }
 
 video.addEventListener("play", () => {
-    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#fff"/>';
     showAudioController();
 });
 
 video.addEventListener("pause", () => {
-    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z" fill="#fff"/>';
     volumeContainer.classList.remove("hide-audio");
     clearTimeout(hideTimeout);
 });
@@ -448,7 +520,6 @@ function seek(e) {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     
-    // Instant visual feedback on drag
     progressBar.style.width = (pos * 100) + "%";
     if (video.duration && !isNaN(video.duration)) {
         timeDisplay.innerText = formatTime(pos * video.duration) + " / " + formatTime(video.duration);
