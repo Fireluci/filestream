@@ -312,7 +312,7 @@ video {
 
         <!-- Separate Bottom Control Bar -->
         <div class="control-bar fade-controls" id="controlBar">
-            <div class="progress-container" id="progressContainer" onclick="seekVideo(event)">
+            <div class="progress-container" id="progressContainer">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
@@ -372,8 +372,8 @@ const playerContainer = document.getElementById("playerContainer");
 const controlBar = document.getElementById("controlBar");
 const volumeContainer = document.getElementById("volumeContainer");
 const fadeControls = document.querySelectorAll(".fade-controls");
-const playButtonImg = document.getElementById("playButtonImg");
 const progressBar = document.getElementById("progressBar");
+const progressContainer = document.getElementById("progressContainer");
 const timeDisplay = document.getElementById("timeDisplay");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeIcon = document.getElementById("volumeIcon");
@@ -430,9 +430,9 @@ video.addEventListener("pause", () => {
     clearTimeout(hideTimeout);
 });
 
-/* --- Time & Progress --- */
+/* --- Time & Progress Bar --- */
 video.addEventListener("timeupdate", () => {
-    if (video.duration) {
+    if (video.duration && !isNaN(video.duration)) {
         const percent = (video.currentTime / video.duration) * 100;
         progressBar.style.width = percent + "%";
         timeDisplay.innerText = formatTime(video.currentTime) + " / " + formatTime(video.duration);
@@ -445,12 +445,14 @@ function formatTime(seconds) {
     return m + ":" + (s < 10 ? "0" : "") + s;
 }
 
-function seekVideo(e) {
-    const rect = document.getElementById("progressContainer").getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    video.currentTime = pos * video.duration;
+progressContainer.addEventListener("click", (e) => {
+    const rect = progressContainer.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    if (video.duration && !isNaN(video.duration)) {
+        video.currentTime = pos * video.duration;
+    }
     showControls();
-}
+});
 
 function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); showControls(); }
 function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); showControls(); }
