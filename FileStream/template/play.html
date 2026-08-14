@@ -59,7 +59,7 @@ nav h3 { font-size: 24px; font-weight: 700; color: var(--brand-green); letter-sp
     overflow: hidden;
 }
 
-/* Strict 18:9 Video Box (Contains video and internal vertical volume slider) */
+/* Strict 18:9 Video Box */
 .video-wrapper {
     position: relative;
     width: 100%;
@@ -78,22 +78,18 @@ video {
     display: block;
 }
 
-/* Top-Left Watermark Badge */
-.player-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: var(--brand-green);
-    color: #0b0f19;
-    font-weight: 700;
-    font-size: 14px;
-    padding: 6px 14px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px var(--brand-green-glow);
-    z-index: 10;
+/* Control Fading Transition (5s Inactivity Rule) */
+.fade-controls {
+    opacity: 1;
+    transition: opacity 0.35s ease;
 }
 
-/* Vertical Volume Slider pinned inside the right inner edge of the video */
+.hide-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Vertical Volume Slider pinned inside right inner edge of video */
 .vertical-volume-container {
     position: absolute;
     right: 15px;
@@ -132,7 +128,7 @@ video {
 }
 .volume-icon-btn svg { width: 20px; height: 20px; fill: var(--brand-green); }
 
-/* Separate Control Bar Below Video (Independent layout) */
+/* Separate Control Bar Below Video */
 .control-bar {
     background: rgba(11, 15, 25, 0.9);
     border: 2px solid rgba(29, 185, 84, 0.3);
@@ -199,6 +195,27 @@ video {
     box-shadow: 0 4px 15px var(--brand-green-glow);
 }
 .ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Custom 3D Play Button Asset Styling */
+.play-btn-custom {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+.play-btn-custom:hover {
+    transform: scale(1.1);
+}
+.play-btn-custom img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 50%;
+}
 
 .time-display {
     font-size: 13px;
@@ -281,12 +298,11 @@ video {
 
     <div class="player-card">
         
-        <!-- 18:9 Video Wrapper (Contains video, badge, and internal vertical volume control) -->
+        <!-- 18:9 Video Wrapper with Internal Auto-Hiding Vertical Volume -->
         <div class="video-wrapper" id="playerContainer">
-            <div class="player-badge">19</div>
             <video id="player" src="{{file_url}}" playsinline></video>
 
-            <div class="vertical-volume-container">
+            <div class="vertical-volume-container fade-controls" id="volumeContainer">
                 <input type="range" min="0" max="1" step="0.05" value="1" class="vertical-slider" id="volumeSlider" oninput="setVolume(this.value)">
                 <button class="volume-icon-btn" onclick="toggleMute()">
                     <svg id="volumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
@@ -295,20 +311,15 @@ video {
         </div>
 
         <!-- Separate Bottom Control Bar -->
-        <div class="control-bar">
+        <div class="control-bar fade-controls" id="controlBar">
             <div class="progress-container" id="progressContainer" onclick="seekVideo(event)">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
             <div class="controls-buttons">
-                <!-- Stop Button -->
-                <button class="ctrl-btn" onclick="stopVideo()" title="Stop">
-                    <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
-                </button>
-
-                <!-- Dynamic Play / Pause Button -->
-                <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">
-                    <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <!-- Custom 3D Play/Pause Button Asset -->
+                <button class="play-btn-custom" onclick="togglePlay()" title="Play/Pause">
+                    <img id="playButtonImg" src="https://i.ibb.co/b2c58c555d21fd0a1aca52d4a0aba498.jpg" alt="Play">
                 </button>
 
                 <!-- Rewind 10s -->
@@ -358,12 +369,16 @@ video {
 <script>
 const video = document.getElementById("player");
 const playerContainer = document.getElementById("playerContainer");
-const playPauseIcon = document.getElementById("playPauseIcon");
+const controlBar = document.getElementById("controlBar");
+const volumeContainer = document.getElementById("volumeContainer");
+const fadeControls = document.querySelectorAll(".fade-controls");
+const playButtonImg = document.getElementById("playButtonImg");
 const progressBar = document.getElementById("progressBar");
 const timeDisplay = document.getElementById("timeDisplay");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeIcon = document.getElementById("volumeIcon");
 const toast = document.getElementById("toast");
+let hideTimeout;
 
 function showToast(message) {
     toast.innerText = message;
@@ -382,6 +397,21 @@ function cleanFileName(name) {
 }
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
+/* --- Inactivity Auto-Hide Controls (5 seconds) --- */
+function showControls() {
+    fadeControls.forEach(el => el.classList.remove("hide-controls"));
+    clearTimeout(hideTimeout);
+    if (!video.paused) {
+        hideTimeout = setTimeout(() => {
+            fadeControls.forEach(el => el.classList.add("hide-controls"));
+        }, 5000);
+    }
+}
+
+playerContainer.addEventListener("mousemove", showControls);
+playerContainer.addEventListener("touchstart", showControls);
+controlBar.addEventListener("mousemove", showControls);
+
 /* --- Play / Pause State Toggle --- */
 function togglePlay() {
     if (video.paused) {
@@ -391,17 +421,13 @@ function togglePlay() {
     }
 }
 
-function stopVideo() {
-    video.pause();
-    video.currentTime = 0;
-}
-
 video.addEventListener("play", () => {
-    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    showControls();
 });
 
 video.addEventListener("pause", () => {
-    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    fadeControls.forEach(el => el.classList.remove("hide-controls"));
+    clearTimeout(hideTimeout);
 });
 
 /* --- Time & Progress --- */
@@ -423,16 +449,18 @@ function seekVideo(e) {
     const rect = document.getElementById("progressContainer").getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
     video.currentTime = pos * video.duration;
+    showControls();
 }
 
-function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); }
-function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); }
+function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); showControls(); }
+function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); showControls(); }
 
 /* --- Volume Controls --- */
 function setVolume(val) {
     video.volume = val;
     video.muted = (val == 0);
     updateVolumeIcon(val);
+    showControls();
 }
 
 function toggleMute() {
@@ -447,6 +475,7 @@ function toggleMute() {
         volumeSlider.value = prev;
         updateVolumeIcon(prev);
     }
+    showControls();
 }
 
 function updateVolumeIcon(val) {
