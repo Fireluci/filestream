@@ -69,6 +69,7 @@ nav h3 { font-size: 24px; font-weight: 700; color: var(--brand-green); letter-sp
     overflow: hidden;
     border: 2px solid rgba(29, 185, 84, 0.3);
     border-bottom: none;
+    cursor: pointer;
 }
 
 video {
@@ -78,18 +79,18 @@ video {
     display: block;
 }
 
-/* Control Fading Transition (5s Inactivity Rule) */
-.fade-controls {
+/* Audio Controller Auto-Hide Transition (5s Inactivity Rule) */
+.audio-fade {
     opacity: 1;
     transition: opacity 0.35s ease;
 }
 
-.hide-controls {
+.hide-audio {
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
-/* Vertical Volume Slider pinned inside right inner edge of video */
+/* Vertical Volume Slider pinned inside right inner edge of video (Using 2nd image style: Green Capsule Track) */
 .vertical-volume-container {
     position: absolute;
     right: 15px;
@@ -98,11 +99,11 @@ video {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: rgba(11, 15, 25, 0.75);
+    background: rgba(11, 15, 25, 0.85);
     border: 1px solid rgba(29, 185, 84, 0.4);
-    padding: 12px 6px;
-    border-radius: 20px;
-    backdrop-filter: blur(6px);
+    padding: 14px 8px;
+    border-radius: 30px;
+    backdrop-filter: blur(8px);
     z-index: 20;
     box-shadow: 0 8px 20px rgba(0,0,0,0.5);
 }
@@ -110,25 +111,32 @@ video {
 .vertical-slider {
     writing-mode: bt-lr;
     -webkit-appearance: slider-vertical;
-    width: 8px;
-    height: 90px;
+    width: 10px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
     accent-color: var(--brand-green);
     cursor: pointer;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .volume-icon-btn {
-    background: none;
-    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(29, 185, 84, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
 }
-.volume-icon-btn svg { width: 20px; height: 20px; fill: var(--brand-green); }
+.volume-icon-btn:hover { background: var(--brand-green); border-color: var(--brand-green); }
+.volume-icon-btn svg { width: 18px; height: 18px; fill: var(--brand-green); }
+.volume-icon-btn:hover svg { fill: #0b0f19; }
 
-/* Separate Control Bar Below Video */
+/* Separate Control Bar Below Video (Permanently Visible) */
 .control-bar {
     background: rgba(11, 15, 25, 0.9);
     border: 2px solid rgba(29, 185, 84, 0.3);
@@ -141,12 +149,13 @@ video {
 /* Progress Track */
 .progress-container {
     width: 100%;
-    height: 6px;
+    height: 8px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
     cursor: pointer;
     margin-bottom: 12px;
     position: relative;
+    touch-action: none;
 }
 .progress-bar {
     height: 100%;
@@ -155,12 +164,13 @@ video {
     border-radius: 4px;
     position: relative;
     box-shadow: 0 0 10px var(--brand-green-glow);
+    pointer-events: none;
 }
 .progress-bar::after {
     content: '';
     position: absolute;
     right: -6px;
-    top: -4px;
+    top: -3px;
     width: 14px;
     height: 14px;
     background: #fff;
@@ -175,47 +185,29 @@ video {
     gap: 12px;
 }
 
+/* Round Circular Buttons matching Image 1 Design */
 .ctrl-btn {
-    background: rgba(29, 185, 84, 0.3);
-    border: 1px solid rgba(29, 185, 84, 0.5);
+    background: #000000;
+    border: 1px solid rgba(29, 185, 84, 0.4);
     color: #fff;
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 .ctrl-btn:hover {
     background: var(--brand-green);
     color: #0b0f19;
+    border-color: var(--brand-green);
     transform: scale(1.08);
     box-shadow: 0 4px 15px var(--brand-green-glow);
 }
 .ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
-
-/* Custom 3D Play Button Asset Styling */
-.play-btn-custom {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease;
-}
-.play-btn-custom:hover {
-    transform: scale(1.1);
-}
-.play-btn-custom img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border-radius: 50%;
-}
 
 .time-display {
     font-size: 13px;
@@ -298,43 +290,43 @@ video {
 
     <div class="player-card">
         
-        <!-- 18:9 Video Wrapper with Internal Auto-Hiding Vertical Volume -->
-        <div class="video-wrapper" id="playerContainer">
+        <!-- 18:9 Video Wrapper with Internal Auto-Hiding Audio Controller & Click-to-Play -->
+        <div class="video-wrapper" id="playerContainer" onclick="handleVideoClick(event)">
             <video id="player" src="{{file_url}}" playsinline></video>
 
-            <div class="vertical-volume-container fade-controls" id="volumeContainer">
+            <div class="vertical-volume-container audio-fade" id="volumeContainer">
                 <input type="range" min="0" max="1" step="0.05" value="1" class="vertical-slider" id="volumeSlider" oninput="setVolume(this.value)">
-                <button class="volume-icon-btn" onclick="toggleMute()">
+                <button class="volume-icon-btn" onclick="toggleMute(event)" title="Mute/Unmute">
                     <svg id="volumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                 </button>
             </div>
         </div>
 
-        <!-- Separate Bottom Control Bar -->
-        <div class="control-bar fade-controls" id="controlBar">
+        <!-- Separate Bottom Control Bar (Permanently Visible) -->
+        <div class="control-bar" id="controlBar">
             <div class="progress-container" id="progressContainer">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
             <div class="controls-buttons">
-                <!-- Custom 3D Play/Pause Button Asset -->
-                <button class="play-btn-custom" onclick="togglePlay()" title="Play/Pause">
-                    <img id="playButtonImg" src="https://i.ibb.co/b2c58c555d21fd0a1aca52d4a0aba498.jpg" alt="Play">
+                <!-- Play/Pause Button (Circular Style from Image 1) -->
+                <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()" title="Play/Pause">
+                    <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </button>
 
-                <!-- Rewind 10s -->
+                <!-- Rewind 10s (Using Rewind 10s Circular Button from Image 1) -->
                 <button class="ctrl-btn" onclick="skipBack()" title="Rewind 10s">
                     <svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1 5v4l3-2-3-2z"/></svg>
                 </button>
 
-                <!-- Forward 10s -->
+                <!-- Forward 10s (Using Forward 10s Circular Button from Image 1) -->
                 <button class="ctrl-btn" onclick="skipForward()" title="Forward 10s">
                     <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8zm1 5v4l-3-2 3-2z"/></svg>
                 </button>
 
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
 
-                <!-- Fullscreen Button -->
+                <!-- Fullscreen Button (Circular Style from Image 1) -->
                 <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">
                     <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                 </button>
@@ -369,9 +361,8 @@ video {
 <script>
 const video = document.getElementById("player");
 const playerContainer = document.getElementById("playerContainer");
-const controlBar = document.getElementById("controlBar");
 const volumeContainer = document.getElementById("volumeContainer");
-const fadeControls = document.querySelectorAll(".fade-controls");
+const playPauseIcon = document.getElementById("playPauseIcon");
 const progressBar = document.getElementById("progressBar");
 const progressContainer = document.getElementById("progressContainer");
 const timeDisplay = document.getElementById("timeDisplay");
@@ -397,20 +388,25 @@ function cleanFileName(name) {
 }
 document.getElementById("cleanName").innerText = cleanFileName("{{file_name}}");
 
-/* --- Inactivity Auto-Hide Controls (5 seconds) --- */
-function showControls() {
-    fadeControls.forEach(el => el.classList.remove("hide-controls"));
+/* --- Auto-Hide Audio Controller Only (5 seconds) --- */
+function showAudioController() {
+    volumeContainer.classList.remove("hide-audio");
     clearTimeout(hideTimeout);
     if (!video.paused) {
         hideTimeout = setTimeout(() => {
-            fadeControls.forEach(el => el.classList.add("hide-controls"));
+            volumeContainer.classList.add("hide-audio");
         }, 5000);
     }
 }
 
-playerContainer.addEventListener("mousemove", showControls);
-playerContainer.addEventListener("touchstart", showControls);
-controlBar.addEventListener("mousemove", showControls);
+playerContainer.addEventListener("mousemove", showAudioController);
+playerContainer.addEventListener("touchstart", showAudioController);
+
+/* --- Click on Video to Play/Pause --- */
+function handleVideoClick(e) {
+    if (e.target.closest('#volumeContainer')) return;
+    togglePlay();
+}
 
 /* --- Play / Pause State Toggle --- */
 function togglePlay() {
@@ -422,15 +418,17 @@ function togglePlay() {
 }
 
 video.addEventListener("play", () => {
-    showControls();
+    playPauseIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    showAudioController();
 });
 
 video.addEventListener("pause", () => {
-    fadeControls.forEach(el => el.classList.remove("hide-controls"));
+    playPauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    volumeContainer.classList.remove("hide-audio");
     clearTimeout(hideTimeout);
 });
 
-/* --- Time & Progress Bar --- */
+/* --- Time & Progress Bar Scrubbing --- */
 video.addEventListener("timeupdate", () => {
     if (video.duration && !isNaN(video.duration)) {
         const percent = (video.currentTime / video.duration) * 100;
@@ -445,27 +443,44 @@ function formatTime(seconds) {
     return m + ":" + (s < 10 ? "0" : "") + s;
 }
 
-progressContainer.addEventListener("click", (e) => {
+function seek(e) {
     const rect = progressContainer.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     if (video.duration && !isNaN(video.duration)) {
         video.currentTime = pos * video.duration;
     }
-    showControls();
+}
+
+progressContainer.addEventListener("click", (e) => {
+    seek(e);
+    showAudioController();
 });
 
-function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); showControls(); }
-function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); showControls(); }
+let isDragging = false;
+progressContainer.addEventListener("mousedown", (e) => { isDragging = true; seek(e); });
+progressContainer.addEventListener("touchstart", (e) => { isDragging = true; seek(e); });
+
+document.addEventListener("mousemove", (e) => {
+    if (isDragging) seek(e);
+});
+document.addEventListener("touchmove", (e) => {
+    if (isDragging) seek(e);
+});
+
+document.addEventListener("mouseup", () => { isDragging = false; });
+document.addEventListener("touchend", () => { isDragging = false; });
 
 /* --- Volume Controls --- */
 function setVolume(val) {
     video.volume = val;
     video.muted = (val == 0);
     updateVolumeIcon(val);
-    showControls();
+    showAudioController();
 }
 
-function toggleMute() {
+function toggleMute(e) {
+    if (e) e.stopPropagation();
     if (video.volume > 0) {
         video.dataset.lastVol = video.volume;
         video.volume = 0;
@@ -477,7 +492,7 @@ function toggleMute() {
         volumeSlider.value = prev;
         updateVolumeIcon(prev);
     }
-    showControls();
+    showAudioController();
 }
 
 function updateVolumeIcon(val) {
@@ -487,6 +502,9 @@ function updateVolumeIcon(val) {
         volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
     }
 }
+
+function skipBack() { video.currentTime = Math.max(0, video.currentTime - 10); showAudioController(); }
+function skipForward() { video.currentTime = Math.min(video.duration, video.currentTime + 10); showAudioController(); }
 
 /* --- Fullscreen --- */
 function toggleFullscreen() {
