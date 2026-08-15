@@ -3,6 +3,7 @@ import math
 import logging
 import mimetypes
 import traceback
+import asyncio
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from FileStream.bot import multi_clients, work_loads, FileStream
@@ -18,7 +19,7 @@ async def root_route_handler(request):
     return web.Response(text="Bot is running!")
 
 @routes.get("/status", allow_head=True)
-async def root_route_handler(_):
+async def status_route_handler(_):
     return web.json_response(
         {
             "server_status": "running",
@@ -36,7 +37,7 @@ async def root_route_handler(_):
     )
 
 @routes.get("/watch/{path}", allow_head=True)
-async def stream_handler(request: web.Request):
+async def watch_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         return web.Response(text=await render_page(path), content_type='text/html')
@@ -48,7 +49,7 @@ async def stream_handler(request: web.Request):
         pass
 
 @routes.get("/dl/{path}", allow_head=True)
-async def stream_handler(request: web.Request):
+async def dl_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         return await media_streamer(request, path)
@@ -56,7 +57,7 @@ async def stream_handler(request: web.Request):
         raise web.HTTPForbidden(text=e.message)
     except FIleNotFound as e:
         raise web.HTTPNotFound(text=e.message)
-    except (AttributeError, BadStatusLine, ConnectionResetError):
+    except (AttributeError, BadStatusLine, ConnectionResetError, asyncio.CancelledError):
         pass
     except Exception as e:
         traceback.print_exc()
@@ -96,7 +97,6 @@ async def media_streamer(request: web.Request, db_id: str):
     try:
         file_id = await tg_connect.get_file_properties(db_id, multi_clients)
     except Exception as e:
-        # If the request fails due to a stale connection, clear cache and retry once with a fresh ByteStreamer
         logging.warning(f"Encountered error with client {index}, clearing cache and refreshing: {e}")
         if faster_client in class_cache:
             del class_cache[faster_client]
@@ -148,9 +148,8 @@ async def media_streamer(request: web.Request, db_id: str):
     if not mime_type:
         mime_type = mimetypes.guess_type(file_name)[0] or "application/octet-stream"
 
-    return web.Response(
+    response = web.StreamResponse(
         status=206 if range_header else 200,
-        body=body,
         headers={
             "Content-Type": f"{mime_type}",
             "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
@@ -160,3 +159,17 @@ async def media_streamer(request: web.Request, db_id: str):
             "Connection": "keep-alive",
         },
     )
+
+    await response.prepare(request)
+
+    try:
+        async for chunk in body:
+            await response.write(chunk)
+    except (asyncio.CancelledError, ConnectionResetError, BrokenPipeError):
+        logging.info(f"Stream aborted: client closed connection for {file_name}")
+    except Exception as e:
+        logging.error(f"Error while writing response chunk for {file_name}: {e}")
+    finally:
+        await response.write_eof()
+
+    return response
