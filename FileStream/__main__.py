@@ -60,63 +60,6 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 
 # --------------------------------------------------------------------
-# 4 DAILY RESTARTS (00:00 / 06:00 / 12:00 / 18:00)
-# --------------------------------------------------------------------
-def get_next_restart():
-    now = datetime.now(tz=IST)
-    schedule_hours = [0, 6, 12, 18]
-
-    for h in schedule_hours:
-        t = now.replace(hour=h, minute=0, second=0, microsecond=0)
-        if t > now:
-            return t
-
-    # all passed → tomorrow 00:00
-    return now.replace(day=now.day + 1, hour=0, minute=0, second=0, microsecond=0)
-
-
-async def restart_scheduler():
-    while True:
-        next_restart = get_next_restart()
-        wait_secs = (next_restart - datetime.now(tz=IST)).total_seconds()
-
-        print(f"[Auto-Restart] Next at {next_restart.isoformat()} IST ({wait_secs/3600:.2f} hours).")
-        await asyncio.sleep(wait_secs)
-
-        timestamp = fmt_time(datetime.now(tz=IST))
-        msg = (
-            f"♻️ BOT RESTARTED\n"
-            f"⏰ {timestamp}\n"
-            f"🔁 Scheduled restart (4× daily)"
-        )
-
-        logging.info(msg)
-        print(msg)
-
-        # Notify owner ONLY
-        try:
-            await FileStream.send_message(OWNER_ID, msg)
-        except Exception as e:
-            print("Failed to notify owner:", e)
-
-        # Graceful shutdown
-        try: await FileStream.stop()
-        except: pass
-
-        try: await FileStream._client.disconnect()
-        except: pass
-
-        try: await FileStream.session.stop()
-        except: pass
-
-        try: await server.cleanup()
-        except: pass
-
-        print("[Auto-Restart] Exiting for restart…")
-        sys.exit(0)
-
-
-# --------------------------------------------------------------------
 # STARTUP
 # --------------------------------------------------------------------
 async def start_services():
@@ -159,9 +102,6 @@ async def start_services():
     print(" URL =>>", Server.URL)
     print("------------------------------------------------------------------")
 
-    # Start restart loop
-    loop.create_task(restart_scheduler())
-
     await idle()
 
 
@@ -182,8 +122,8 @@ async def cleanup():
 if __name__ == "__main__":
     try:
         loop.run_until_complete(start_services())
-    except SystemExit:
-        print("[Main] Scheduled restart → skipping cleanup.")
+    except KeyboardInterrupt:
+        print("[Main] Process interrupted by user.")
     except Exception:
         logging.error(traceback.format_exc())
     finally:
