@@ -38,10 +38,23 @@ logging.basicConfig(
     ],
 )
 
-logging.getLogger("aiohttp").setLevel(logging.ERROR)
+# FIXED: Allowed aiohttp logs to pass through so web requests/pings can be seen
+logging.getLogger("aiohttp").setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
-server = web.AppRunner(web_server())
+# FIXED: Added request logging middleware to track UptimeRobot / external pings in console
+@web.middleware
+async def request_logger_middleware(request, handler):
+    logging.info(f"[Ping] Incoming request: {request.method} {request.path} from {request.remote}")
+    return await handler(request)
+
+# Pass the logging middleware into the web server application instance
+_app = web_server()
+if _app._middlewares is None:
+    _app._middlewares = []
+_app._middlewares.append(request_logger_middleware)
+
+server = web.AppRunner(_app)
 loop = asyncio.get_event_loop()
 IST = timezone(timedelta(hours=5, minutes=30))
 
