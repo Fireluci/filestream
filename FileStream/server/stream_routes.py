@@ -143,7 +143,12 @@ async def media_streamer(request: web.Request, db_id: str):
 
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
-    disposition = "inline"
+    
+    # Force 'attachment' for download routes so browsers trigger save dialog instead of opening a player
+    if request.path.startswith("/dl/"):
+        disposition = "attachment"
+    else:
+        disposition = "inline"
 
     if not mime_type:
         mime_type = mimetypes.guess_type(file_name)[0] or "application/octet-stream"
