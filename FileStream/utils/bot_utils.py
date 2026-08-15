@@ -81,8 +81,8 @@ async def is_user_joined(bot, message: Message):
 
 async def gen_link(_id):
     file_info = await db.get_file(_id)
-    file_name = file_info['file_name']
     file_size = humanbytes(file_info['file_size'])
+    file_name = file_info['file_name']
     mime_type = file_info['mime_type']
 
     page_link = f"{Server.URL}watch/{_id}"
