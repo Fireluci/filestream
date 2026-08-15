@@ -13,6 +13,10 @@ from FileStream.utils.render_template import render_page
 
 routes = web.RouteTableDef()
 
+@routes.get("/")
+async def root_route_handler(request):
+    return web.Response(text="Bot is running!")
+
 @routes.get("/status", allow_head=True)
 async def root_route_handler(_):
     return web.json_response(
