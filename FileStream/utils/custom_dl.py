@@ -5,7 +5,7 @@ from FileStream.bot import work_loads
 from pyrogram import Client, utils, raw
 from .file_properties import get_file_ids
 from pyrogram.session import Session, Auth
-from pyrogram.errors import AuthBytesInvalid
+from pyrogram.errors import AuthBytesInvalid, FloodWait
 from pyrogram.file_id import FileId, FileType, ThumbnailSource
 from pyrogram.types import Message
 
@@ -18,11 +18,11 @@ class ByteStreamer:
 
     async def get_file_properties(self, db_id: str, multi_clients) -> FileId:
         """
-        Returns the properties of a media of a specific message in a FIleId class.
+        Returns the properties of a media of a specific message in a FileId class.
         if the properties are cached, then it'll return the cached results.
         or it'll generate the properties from the Message ID and cache them.
         """
-        if not db_id in self.cached_file_ids:
+        if db_id not in self.cached_file_ids:
             logging.debug("Before Calling generate_file_properties")
             await self.generate_file_properties(db_id, multi_clients)
             logging.debug(f"Cached file properties for file with ID {db_id}")
@@ -31,7 +31,7 @@ class ByteStreamer:
     async def generate_file_properties(self, db_id: str, multi_clients) -> FileId:
         """
         Generates the properties of a media file on a specific message.
-        returns ths properties in a FIleId class.
+        returns the properties in a FileId class.
         """
         logging.debug("Before calling get_file_ids")
         file_id = await get_file_ids(self.client, db_id, multi_clients, Message)
@@ -45,7 +45,6 @@ class ByteStreamer:
         Generates the media session for the DC that contains the media file.
         This is required for getting the bytes from Telegram servers.
         """
-
         media_session = client.media_sessions.get(file_id.dc_id, None)
 
         if media_session is None:
@@ -96,11 +95,12 @@ class ByteStreamer:
             logging.debug(f"Using cached media session for DC {file_id.dc_id}")
         return media_session
 
-
     @staticmethod
-    async def get_location(file_id: FileId) -> Union[raw.types.InputPhotoFileLocation,
-                                                     raw.types.InputDocumentFileLocation,
-                                                     raw.types.InputPeerPhotoFileLocation,]:
+    async def get_location(file_id: FileId) -> Union[
+        raw.types.InputPhotoFileLocation,
+        raw.types.InputDocumentFileLocation,
+        raw.types.InputPeerPhotoFileLocation,
+    ]:
         """
         Returns the file location for the media file.
         """
@@ -151,22 +151,19 @@ class ByteStreamer:
         last_part_cut: int,
         part_count: int,
         chunk_size: int,
-    ) -> Union[str, None]:
+    ):
         """
-        Custom generator that yields the bytes of the media file.
-        Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
-        Thanks to Eyaadh <https://github.com/eyaadh>
+        Custom generator that yields the bytes of the media file with error handling.
         """
         client = self.client
         work_loads[index] += 1
-        logging.debug(f"Starting to yielding file with client {index}.")
-        media_session = await self.generate_media_session(client, file_id)
-
+        logging.debug(f"Starting to yield file with client {index}. Active workloads: {work_loads[index]}")
+        
         current_part = 1
-
-        location = await self.get_location(file_id)
-
         try:
+            media_session = await self.generate_media_session(client, file_id)
+            location = await self.get_location(file_id)
+
             r = await media_session.invoke(
                 raw.functions.upload.GetFile(
                     location=location, offset=offset, limit=chunk_size
@@ -197,16 +194,19 @@ class ByteStreamer:
                             location=location, offset=offset, limit=chunk_size
                         ),
                     )
-        except (TimeoutError, AttributeError):
-            pass
+        except (asyncio.CancelledError, ConnectionResetError, BrokenPipeError):
+            logging.info(f"Client disconnected early while streaming part {current_part}/{part_count} on worker {index}.")
+        except (TimeoutError, AttributeError) as e:
+            logging.warning(f"Streaming error on worker {index}: {e}")
+        except Exception as e:
+            logging.error(f"Unexpected exception during file streaming on worker {index}: {e}")
         finally:
-            logging.debug(f"Finished yielding file with {current_part} parts.")
-            work_loads[index] -= 1
+            work_loads[index] = max(0, work_loads[index] - 1)
+            logging.debug(f"Finished yielding file on client {index}. Remaining workloads: {work_loads[index]}")
 
-    
     async def clean_cache(self) -> None:
         """
-        function to clean the cache to reduce memory usage
+        Function to clean the cache to reduce memory usage.
         """
         while True:
             await asyncio.sleep(self.clean_timer)
