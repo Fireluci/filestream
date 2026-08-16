@@ -65,8 +65,17 @@ async def mediainfo_route_handler(request: web.Request):
         
         raw_info = stdout.decode("utf-8", errors="ignore") if proc.returncode == 0 and stdout else "Unable to extract MediaInfo."
 
-        # Remove 'Title' lines from the raw report text
-        lines = [line for line in raw_info.splitlines() if not line.strip().startswith("Title")]
+        # --- CLEANING THE RAW REPORT ---
+        lines = []
+        for line in raw_info.splitlines():
+            stripped = line.strip()
+            # Remove 'Title' and 'Movie name' lines completely
+            if stripped.startswith("Title") or stripped.startswith("Movie name"):
+                continue
+            # Rename 'Text #' to 'Subtitle #' for clarity
+            if stripped.startswith("Text #") or stripped == "Text":
+                line = line.replace("Text", "Subtitle")
+            lines.append(line)
         cleaned_info = "\n".join(lines)
 
         # --- DYNAMIC EXTRACTION FOR QUICK SUMMARY ---
@@ -76,24 +85,49 @@ async def mediainfo_route_handler(request: web.Request):
 
         file_size = extract(r"File size\s*:\s*(.*)", raw_info)
         duration = extract(r"Duration\s*:\s*(.*)", raw_info)
+        bitrate = extract(r"Overall bit rate\s*:\s*(.*)", raw_info)
         
-        # Accurate Video Codec & Resolution parsing
+        # Parse Video Resolution & Codec
         v_width = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
         v_height = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
         resolution = f"{v_width}x{v_height}" if v_width != "N/A" else "N/A"
         
-        # Check actual video format block
-        video_block_match = re.search(r"Video\n(.*?)(?=\n\n|\nAudio|\nText|\Z)", raw_info, re.DOTALL)
+        video_block_match = re.search(r"Video\n(.*?)(?=\n\n|\nAudio|\nSubtitle|\nText|\Z)", raw_info, re.DOTALL)
         video_block = video_block_match.group(1) if video_block_match else raw_info
         video_codec = extract(r"Format\s*:\s*(.*)", video_block, "AVC / HEVC")
 
-        # Extract all Audio Languages uniquely
-        audio_langs = re.findall(r"Audio\s*#?\d*\n.*?Language\s*:\s*(.*)", raw_info)
-        audio_str = ", ".join(list(dict.fromkeys(audio_langs))) if audio_langs else "None"
+        # Extract ALL Audio Languages reliably across sections
+        audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        if not audio_langs:
+            audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info) # Fallback search
+        
+        # Filter and clean up unique languages
+        valid_audio = [l.strip() for l in audio_langs if l.strip().lower() not in ['default', 'forced', 'no']]
+        # Keep only distinct languages found in audio sections
+        audio_str = ", ".join(dict.fromkeys(valid_audio)) if valid_audio else "None"
 
-        # Extract all Subtitle Languages uniquely
-        sub_langs = re.findall(r"Text\s*.*?\n.*?Language\s*:\s*(.*)", raw_info)
-        sub_str = ", ".join(list(dict.fromkeys(sub_langs))) if sub_langs else "None"
+        # Extract Subtitle Languages
+        sub_langs = re.findall(r"Subtitle\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        if not sub_langs:
+            sub_langs = re.findall(r"Text\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        
+        valid_subs = [l.strip() for l in sub_langs if l.strip().lower() not in ['default', 'forced', 'no']]
+        sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
+
+        # Fetch Cleaned File Name from Database for the top header display
+        display_filename = "Media File"
+        try:
+            from FileStream.utils.database import Database
+            from FileStream.config import Telegram
+            db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
+            file_info = await db.get_file(path)
+            if file_info and 'file_name' in file_info:
+                raw_name = file_info['file_name']
+                step1 = re.sub(r'@[a-zA-Z0-9_]+', '', raw_name)
+                step2 = re.sub(r'[^a-zA-Z0-9\s]', ' ', step1)
+                display_filename = re.sub(r'\s+', ' ', step2).strip()
+        except Exception:
+            pass
 
         html = f"""
         <!DOCTYPE html>
@@ -109,6 +143,16 @@ async def mediainfo_route_handler(request: web.Request):
                     font-family: 'Courier New', Courier, monospace;
                     padding: 20px;
                     margin: 0;
+                }}
+                .file-header {{
+                    background: #161b22;
+                    border: 1px solid #30363d;
+                    padding: 12px 18px;
+                    border-radius: 8px;
+                    margin-bottom: 15px;
+                    font-size: 15px;
+                    color: #58a6ff;
+                    font-weight: bold;
                 }}
                 .summary-card {{
                     background: #161b22;
@@ -128,7 +172,6 @@ async def mediainfo_route_handler(request: web.Request):
                     gap: 12px;
                     font-size: 14px;
                 }}
-                /* Distinct Color Coding */
                 .tag-video {{ color: #3fb950; font-weight: bold; }}  /* Green */
                 .tag-audio {{ color: #f0883e; font-weight: bold; }}  /* Orange */
                 .tag-sub {{ color: #bc8cff; font-weight: bold; }}    /* Purple */
@@ -153,6 +196,12 @@ async def mediainfo_route_handler(request: web.Request):
             </style>
         </head>
         <body>
+            <!-- TOP FILE NAME HEADER -->
+            <div class="file-header">
+                🔆 [ {file_size} ] {display_filename}
+            </div>
+
+            <!-- QUICK SUMMARY CARD -->
             <div class="summary-card">
                 <h3>⚡ Quick Media Summary</h3>
                 <div class="summary-grid">
@@ -160,6 +209,7 @@ async def mediainfo_route_handler(request: web.Request):
                     <div>🎞️ <b>Video Codec:</b> <span class="tag-video">{video_codec}</span></div>
                     <div>⏱️ <b>Duration:</b> <span class="tag-gen">{duration}</span></div>
                     <div>📦 <b>File Size:</b> <span class="tag-gen">{file_size}</span></div>
+                    <div>📊 <b>Bitrate:</b> <span class="tag-gen">{bitrate}</span></div>
                     <div>🔊 <b>Audio Tracks:</b> <span class="tag-audio">{audio_str}</span></div>
                     <div>💬 <b>Subtitles:</b> <span class="tag-sub">{sub_str}</span></div>
                 </div>
