@@ -1,6 +1,6 @@
 import asyncio
 
-from FileStream.bot import FileStream
+from FileStream.bot import FileStream, multi_clients
 from FileStream.utils.bot_utils import (
     is_user_banned,
     is_user_exist,
@@ -9,7 +9,7 @@ from FileStream.utils.bot_utils import (
     is_user_authorized,
 )
 from FileStream.utils.database import Database
-from FileStream.utils.file_properties import get_file_info
+from FileStream.utils.file_properties import get_file_info, get_file_ids
 from FileStream.config import Telegram
 from pyrogram import filters, Client
 from pyrogram.errors import FloodWait
@@ -54,9 +54,22 @@ async def private_receive_handler(bot: Client, message: Message):
         if not file_info:
             return
 
+        # Save original file information.
         inserted_id = await db.add_file(file_info)
 
-        reply_markup, stream_text = await gen_link(_id=inserted_id)
+        # Copy the file to FLOG_CHANNEL and store the resulting
+        # Telegram file ID in MongoDB.
+        await get_file_ids(
+            FileStream,
+            inserted_id,
+            multi_clients,
+            message,
+        )
+
+        # Generate the links after the FLOG file ID exists.
+        reply_markup, stream_text = await gen_link(
+            _id=inserted_id
+        )
 
         await message.reply_text(
             text=stream_text,
