@@ -26,8 +26,8 @@ class LANG(object):
 🔆 [ {} ] {}
 
 ♻️ Dᴏᴡɴʟᴏᴀᴅ Link ➜ {}
-🌟 Sᴛʀᴇᴀᴍ Link ➜ {}
-📒 MediaInfo:- Available via Bot / Instant View</b>"""
+
+🌟 Sᴛʀᴇᴀᴍ Link ➜ {}</b>"""
 
     STREAM_TEXT_X = """
     <b>[ DOWNLOAD / STREAM ]
