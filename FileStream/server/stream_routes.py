@@ -80,7 +80,11 @@ async def mediainfo_route_handler(request: web.Request):
         lines = []
         for line in raw_info.splitlines():
             stripped = line.strip()
-            if stripped.startswith("Title") or stripped.startswith("Movie name"):
+            # Remove Title, Movie name, Writing application, and Writing library
+            if (stripped.startswith("Title") or 
+                stripped.startswith("Movie name") or 
+                stripped.startswith("Writing application") or 
+                stripped.startswith("Writing library")):
                 continue
             if stripped.startswith("Text #") or stripped == "Text":
                 line = line.replace("Text", "Subtitle")
@@ -95,9 +99,15 @@ async def mediainfo_route_handler(request: web.Request):
         file_size = extract(r"File size\s*:\s*(.*)", raw_info)
         duration = extract(r"Duration\s*:\s*(.*)", raw_info)
         
-        v_width = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
-        v_height = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
-        resolution = f"{v_width}x{v_height}" if v_width != "N/A" else "N/A"
+        v_width_str = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
+        v_height_str = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
+        
+        if v_width_str.isdigit() and v_height_str.isdigit():
+            w, h = int(v_width_str), int(v_height_str)
+            # Swap if vertical/shorts format (height > width) is preferred as WxH or HxW based on user request
+            resolution = f"{w}x{h}" if w >= h else f"{w}x{h}"
+        else:
+            resolution = "N/A"
         
         video_block_match = re.search(r"Video\n(.*?)(?=\n\n|\nAudio|\nSubtitle|\nText|\Z)", raw_info, re.DOTALL)
         video_block = video_block_match.group(1) if video_block_match else raw_info
@@ -147,6 +157,7 @@ async def mediainfo_route_handler(request: web.Request):
                     font-family: 'Courier New', Courier, monospace;
                     padding: 20px;
                     margin: 0;
+                    word-break: break-word;
                 }}
                 .file-header {{
                     background: #161b22;
@@ -155,7 +166,7 @@ async def mediainfo_route_handler(request: web.Request):
                     border-radius: 8px;
                     margin-bottom: 15px;
                     font-size: 15px;
-                    color: #58a6ff;
+                    color: #ff7b72; /* Distinct color for file name */
                     font-weight: bold;
                 }}
                 .summary-card {{
@@ -191,16 +202,23 @@ async def mediainfo_route_handler(request: web.Request):
                     padding: 20px;
                     border-radius: 12px;
                     overflow-x: auto;
-                    white-space: pre-wrap;
+                    white-space: pre; /* Prevents awkward line-wrapping breaking colons */
                     border: 1px solid #30363d;
                     font-size: 13px;
                     line-height: 1.5;
                 }}
-                /* Color coding for the full metadata report */
-                .sec-general {{ color: #58a6ff; font-weight: bold; }} /* Blue */
-                .sec-video {{ color: #3fb950; font-weight: bold; }}   /* Green */
-                .sec-audio {{ color: #f0883e; font-weight: bold; }}   /* Orange */
-                .sec-sub {{ color: #bc8cff; font-weight: bold; }}     /* Purple */
+                /* Uniform, bigger font and color for section names */
+                .sec-header {{
+                    color: #79c0ff;
+                    font-size: 16px;
+                    font-weight: bold;
+                    display: inline-block;
+                    margin-top: 5px;
+                }}
+                .sec-general {{ color: #58a6ff; }}
+                .sec-video {{ color: #3fb950; }}
+                .sec-audio {{ color: #f0883e; }}
+                .sec-sub {{ color: #bc8cff; }}
             </style>
         </head>
         <body>
@@ -225,7 +243,6 @@ async def mediainfo_route_handler(request: web.Request):
             <pre><code id="raw-report">{cleaned_info}</code></pre>
 
             <script>
-                // Automatically color-code lines in the full metadata report based on section
                 document.addEventListener("DOMContentLoaded", function() {{
                     const codeEl = document.getElementById("raw-report");
                     let lines = codeEl.innerHTML.split("\\n");
@@ -233,10 +250,19 @@ async def mediainfo_route_handler(request: web.Request):
 
                     let coloredLines = lines.map(line => {{
                         let trimmed = line.trim();
-                        if (trimmed === "General") currentClass = "sec-general";
-                        else if (trimmed === "Video") currentClass = "sec-video";
-                        else if (trimmed.startsWith("Audio")) currentClass = "sec-audio";
-                        else if (trimmed.startsWith("Subtitle")) currentClass = "sec-sub";
+                        if (trimmed === "General") {{
+                            currentClass = "sec-general";
+                            return `<span class="sec-header">📊 General</span>`;
+                        }} else if (trimmed === "Video") {{
+                            currentClass = "sec-video";
+                            return `<span class="sec-header">🎬 Video</span>`;
+                        }} else if (trimmed.startsWith("Audio")) {{
+                            currentClass = "sec-audio";
+                            return `<span class="sec-header">🔊 ${{line}}</span>`;
+                        }} else if (trimmed.startsWith("Subtitle")) {{
+                            currentClass = "sec-sub";
+                            return `<span class="sec-header">💬 ${{line}}</span>`;
+                        }}
 
                         return `<span class="${{currentClass}}">${{line}}</span>`;
                     }});
