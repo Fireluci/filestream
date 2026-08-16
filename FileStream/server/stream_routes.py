@@ -48,6 +48,49 @@ async def watch_handler(request: web.Request):
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
 
+@routes.get("/mediainfo/{path}", allow_head=True)
+async def mediainfo_route_handler(request: web.Request):
+    try:
+        path = request.match_info["path"]
+        local_url = f"http://127.0.0.1:{Server.PORT}/dl/{path}"
+        
+        # Execute system mediainfo command asynchronously against local stream URL
+        proc = await asyncio.create_subprocess_exec(
+            "mediainfo",
+            local_url,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        
+        if proc.returncode == 0 and stdout:
+            raw_info = stdout.decode("utf-8", errors="ignore")
+        else:
+            raw_info = "Unable to extract MediaInfo or file format not supported."
+
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MediaInfo Report</title>
+            <style>
+                body {{ background: #121212; color: #E0E0E0; font-family: 'Courier New', Courier, monospace; padding: 20px; }}
+                h2 {{ color: #1db954; }}
+                pre {{ background: #1E1E1E; padding: 20px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; border: 1px solid #333; font-size: 14px; line-height: 1.4; }}
+            </style>
+        </head>
+        <body>
+            <h2>📄 MediaInfo Report</h2>
+            <pre>{raw_info}</pre>
+        </body>
+        </html>
+        """
+        return web.Response(text=html, content_type="text/html")
+    except Exception as e:
+        return web.Response(text=f"Error generating MediaInfo: {str(e)}", status=500)
+
 @routes.get("/dl/{path}", allow_head=True)
 async def dl_handler(request: web.Request):
     try:
