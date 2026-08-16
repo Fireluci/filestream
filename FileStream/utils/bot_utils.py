@@ -105,7 +105,7 @@ async def gen_link(_id):
     mediainfo_link = f"{Server.URL}mediainfo/{_id}"
 
     if "video" in mime_type:
-        stream_text = LANG.STREAM_TEXT.format(file_size, file_name, stream_link, page_link, mediainfo_link)
+        stream_text = LANG.STREAM_TEXT.format(file_size, file_name, stream_link, page_link)
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("📺 sᴛʀᴇᴀᴍ", url=page_link), InlineKeyboardButton("📥 ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
@@ -113,7 +113,7 @@ async def gen_link(_id):
             ]
         )
     else:
-        stream_text = LANG.STREAM_TEXT_X.format(file_size, file_name, stream_link, mediainfo_link)
+        stream_text = LANG.STREAM_TEXT_X.format(file_size, file_name, stream_link)
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("📥 ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
