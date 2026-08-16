@@ -4,6 +4,7 @@ import logging
 import mimetypes
 import traceback
 import asyncio
+import re
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from FileStream.bot import multi_clients, work_loads, FileStream
@@ -68,6 +69,32 @@ async def mediainfo_route_handler(request: web.Request):
         lines = [line for line in raw_info.splitlines() if not line.strip().startswith("Title")]
         cleaned_info = "\n".join(lines)
 
+        # --- DYNAMIC EXTRACTION FOR QUICK SUMMARY ---
+        def extract(pattern, text, default="N/A"):
+            match = re.search(pattern, text)
+            return match.group(1).strip() if match else default
+
+        file_size = extract(r"File size\s*:\s*(.*)", raw_info)
+        duration = extract(r"Duration\s*:\s*(.*)", raw_info)
+        
+        # Accurate Video Codec & Resolution parsing
+        v_width = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
+        v_height = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
+        resolution = f"{v_width}x{v_height}" if v_width != "N/A" else "N/A"
+        
+        # Check actual video format block
+        video_block_match = re.search(r"Video\n(.*?)(?=\n\n|\nAudio|\nText|\Z)", raw_info, re.DOTALL)
+        video_block = video_block_match.group(1) if video_block_match else raw_info
+        video_codec = extract(r"Format\s*:\s*(.*)", video_block, "AVC / HEVC")
+
+        # Extract all Audio Languages uniquely
+        audio_langs = re.findall(r"Audio\s*#?\d*\n.*?Language\s*:\s*(.*)", raw_info)
+        audio_str = ", ".join(list(dict.fromkeys(audio_langs))) if audio_langs else "None"
+
+        # Extract all Subtitle Languages uniquely
+        sub_langs = re.findall(r"Text\s*.*?\n.*?Language\s*:\s*(.*)", raw_info)
+        sub_str = ", ".join(list(dict.fromkeys(sub_langs))) if sub_langs else "None"
+
         html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -87,7 +114,7 @@ async def mediainfo_route_handler(request: web.Request):
                     background: #161b22;
                     border: 1px solid #30363d;
                     border-left: 5px solid #58a6ff;
-                    padding: 15px 20px;
+                    padding: 20px;
                     border-radius: 8px;
                     margin-bottom: 25px;
                 }}
@@ -97,10 +124,16 @@ async def mediainfo_route_handler(request: web.Request):
                 }}
                 .summary-grid {{
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 10px;
+                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                    gap: 12px;
                     font-size: 14px;
                 }}
+                /* Distinct Color Coding */
+                .tag-video {{ color: #3fb950; font-weight: bold; }}  /* Green */
+                .tag-audio {{ color: #f0883e; font-weight: bold; }}  /* Orange */
+                .tag-sub {{ color: #bc8cff; font-weight: bold; }}    /* Purple */
+                .tag-gen {{ color: #58a6ff; font-weight: bold; }}    /* Blue */
+
                 h2 {{
                     color: #58a6ff;
                     border-bottom: 2px solid #30363d;
@@ -120,20 +153,18 @@ async def mediainfo_route_handler(request: web.Request):
             </style>
         </head>
         <body>
-            <!-- TOP SUMMARY CARD -->
             <div class="summary-card">
                 <h3>⚡ Quick Media Summary</h3>
                 <div class="summary-grid">
-                    <div>🎬 <b>Resolution:</b> 1280x536</div>
-                    <div>🎞️ <b>Video Codec:</b> AVC / H.264</div>
-                    <div>⏱️ <b>Duration:</b> 2 h 29 min</div>
-                    <div>📦 <b>File Size:</b> 1.82 GiB</div>
-                    <div>🔊 <b>Audio Tracks:</b> Tamil, Telugu, Hindi, English</div>
-                    <div>💬 <b>Subtitles:</b> English (UTF-8)</div>
+                    <div>🎬 <b>Resolution:</b> <span class="tag-video">{resolution}</span></div>
+                    <div>🎞️ <b>Video Codec:</b> <span class="tag-video">{video_codec}</span></div>
+                    <div>⏱️ <b>Duration:</b> <span class="tag-gen">{duration}</span></div>
+                    <div>📦 <b>File Size:</b> <span class="tag-gen">{file_size}</span></div>
+                    <div>🔊 <b>Audio Tracks:</b> <span class="tag-audio">{audio_str}</span></div>
+                    <div>💬 <b>Subtitles:</b> <span class="tag-sub">{sub_str}</span></div>
                 </div>
             </div>
 
-            <!-- FULL METADATA BELOW -->
             <h2>📄 Full Technical Metadata</h2>
             <pre><code>{cleaned_info}</code></pre>
         </body>
@@ -142,7 +173,7 @@ async def mediainfo_route_handler(request: web.Request):
         return web.Response(text=html, content_type="text/html")
     except Exception as e:
         return web.Response(text=f"Error generating MediaInfo: {str(e)}", status=500)
-
+        
 @routes.get("/dl/{path}", allow_head=True)
 async def dl_handler(request: web.Request):
     try:
@@ -171,7 +202,6 @@ async def media_streamer(request: web.Request, db_id: str):
     if Telegram.MULTI_CLIENT:
         logging.info(f"Client {index} is now serving {request.headers.get('X-FORWARDED-FOR', request.remote)}")
 
-    # SELF-HEALING CLIENT CHECK: Ensure client is connected and active
     try:
         if not faster_client.is_connected:
             logging.warning(f"Client {index} was disconnected. Reconnecting automatically...")
@@ -179,16 +209,12 @@ async def media_streamer(request: web.Request, db_id: str):
     except Exception as e:
         logging.error(f"Failed to reconnect client {index}: {e}")
 
-    # Check cache and validate client health
     if faster_client in class_cache:
         tg_connect = class_cache[faster_client]
-        logging.debug(f"Using cached ByteStreamer object for client {index}")
     else:
-        logging.debug(f"Creating new ByteStreamer object for client {index}")
         tg_connect = utils.ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
         
-    logging.debug("before calling get_file_properties")
     try:
         file_id = await tg_connect.get_file_properties(db_id, multi_clients)
     except Exception as e:
@@ -199,8 +225,6 @@ async def media_streamer(request: web.Request, db_id: str):
         class_cache[faster_client] = tg_connect
         file_id = await tg_connect.get_file_properties(db_id, multi_clients)
         
-    logging.debug("after calling get_file_properties")
-    
     file_size = file_id.file_size
 
     if range_header:
@@ -239,11 +263,7 @@ async def media_streamer(request: web.Request, db_id: str):
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
     
-    # Force 'attachment' for download routes so browsers trigger save dialog instead of opening a player
-    if request.path.startswith("/dl/"):
-        disposition = "attachment"
-    else:
-        disposition = "inline"
+    disposition = "attachment" if request.path.startswith("/dl/") else "inline"
 
     if not mime_type:
         mime_type = mimetypes.guess_type(file_name)[0] or "application/octet-stream"
