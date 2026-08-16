@@ -21,19 +21,21 @@ class LANG(object):
 ♻ With This Bot You Can Get Fast Download / Stream Links To Any Telegram Files!</b>"""
 
     STREAM_TEXT = """
-<b>[ DOWNLOAD / STREAM ]
+    <b>[ DOWNLOAD / STREAM ]
 ⌬──━━━━━━━━━━──⌬
-[{}] {}
+🔆 [ {} ] {}
 
-♻️ Dᴏᴡɴʟᴏᴀᴅ ➜ {}
-🌟 Sᴛʀᴇᴀᴍ ➜ {}</b>"""
+♻️ Dᴏᴡɴʟᴏᴀᴅ Link ➜ {}
+🌟 Sᴛʀᴇᴀᴍ Link ➜ {}
+📒 MediaInfo:- Available via Bot / Instant View</b>"""
 
     STREAM_TEXT_X = """
-<b>[ DOWNLOAD / STREAM ]
+    <b>[ DOWNLOAD / STREAM ]
 ⌬──━━━━━━━━━━──⌬
-[{}] {}
+🔆 [ {} ] {}
 
-♻️ Dᴏᴡɴʟᴏᴀᴅ ➜ {}</b>"""
+♻️ Dᴏᴡɴʟᴏᴀᴅ Link ➜ {}
+📒 MediaInfo:- Available via Bot / Instant View</b>"""
 
     BAN_TEXT = "__Sᴏʀʀʏ Sɪʀ, Yᴏᴜ ᴀʀᴇ Bᴀɴɴᴇᴅ ᴛᴏ ᴜsᴇ ᴍᴇ.__\n\n**[Cᴏɴᴛᴀᴄᴛ Dᴇᴠᴇʟᴏᴘᴇʀ](tg://user?id={}) Tʜᴇʏ Wɪʟʟ Hᴇʟᴘ Yᴏᴜ**"
 
