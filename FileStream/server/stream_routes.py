@@ -49,30 +49,40 @@ async def watch_handler(request: web.Request):
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
 
+# Add this cache dictionary near the top of your file with your other caches (like class_cache)
+mediainfo_cache = {}
+
 @routes.get("/mediainfo/{path}", allow_head=True)
 async def mediainfo_route_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        local_url = f"http://127.0.0.1:{Server.PORT}/dl/{path}"
         
-        proc = await asyncio.create_subprocess_exec(
-            "mediainfo",
-            local_url,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, _ = await proc.communicate()
-        
-        raw_info = stdout.decode("utf-8", errors="ignore") if proc.returncode == 0 and stdout else "Unable to extract MediaInfo."
+        # Check if MediaInfo is already cached in memory for instant loading
+        if path in mediainfo_cache:
+            raw_info = mediainfo_cache[path]
+        else:
+            local_url = f"http://127.0.0.1:{Server.PORT}/dl/{path}"
+            
+            proc = await asyncio.create_subprocess_exec(
+                "mediainfo",
+                local_url,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, _ = await proc.communicate()
+            
+            if proc.returncode == 0 and stdout:
+                raw_info = stdout.decode("utf-8", errors="ignore")
+                mediainfo_cache[path] = raw_info  # Save to cache
+            else:
+                raw_info = "Unable to extract MediaInfo."
 
         # --- CLEANING THE RAW REPORT ---
         lines = []
         for line in raw_info.splitlines():
             stripped = line.strip()
-            # Remove 'Title' and 'Movie name' lines completely
             if stripped.startswith("Title") or stripped.startswith("Movie name"):
                 continue
-            # Rename 'Text #' to 'Subtitle #' for clarity
             if stripped.startswith("Text #") or stripped == "Text":
                 line = line.replace("Text", "Subtitle")
             lines.append(line)
@@ -87,7 +97,6 @@ async def mediainfo_route_handler(request: web.Request):
         duration = extract(r"Duration\s*:\s*(.*)", raw_info)
         bitrate = extract(r"Overall bit rate\s*:\s*(.*)", raw_info)
         
-        # Parse Video Resolution & Codec
         v_width = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
         v_height = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
         resolution = f"{v_width}x{v_height}" if v_width != "N/A" else "N/A"
@@ -96,25 +105,18 @@ async def mediainfo_route_handler(request: web.Request):
         video_block = video_block_match.group(1) if video_block_match else raw_info
         video_codec = extract(r"Format\s*:\s*(.*)", video_block, "AVC / HEVC")
 
-        # Extract ALL Audio Languages reliably across sections
         audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
         if not audio_langs:
-            audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info) # Fallback search
-        
-        # Filter and clean up unique languages
+            audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info)
         valid_audio = [l.strip() for l in audio_langs if l.strip().lower() not in ['default', 'forced', 'no']]
-        # Keep only distinct languages found in audio sections
         audio_str = ", ".join(dict.fromkeys(valid_audio)) if valid_audio else "None"
 
-        # Extract Subtitle Languages
         sub_langs = re.findall(r"Subtitle\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
         if not sub_langs:
             sub_langs = re.findall(r"Text\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        
         valid_subs = [l.strip() for l in sub_langs if l.strip().lower() not in ['default', 'forced', 'no']]
         sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
 
-        # Fetch Cleaned File Name from Database for the top header display
         display_filename = "Media File"
         try:
             from FileStream.utils.database import Database
@@ -172,10 +174,10 @@ async def mediainfo_route_handler(request: web.Request):
                     gap: 12px;
                     font-size: 14px;
                 }}
-                .tag-video {{ color: #3fb950; font-weight: bold; }}  /* Green */
-                .tag-audio {{ color: #f0883e; font-weight: bold; }}  /* Orange */
-                .tag-sub {{ color: #bc8cff; font-weight: bold; }}    /* Purple */
-                .tag-gen {{ color: #58a6ff; font-weight: bold; }}    /* Blue */
+                .tag-video {{ color: #3fb950; font-weight: bold; }}
+                .tag-audio {{ color: #f0883e; font-weight: bold; }}
+                .tag-sub {{ color: #bc8cff; font-weight: bold; }}
+                .tag-gen {{ color: #58a6ff; font-weight: bold; }}
 
                 h2 {{
                     color: #58a6ff;
@@ -196,12 +198,10 @@ async def mediainfo_route_handler(request: web.Request):
             </style>
         </head>
         <body>
-            <!-- TOP FILE NAME HEADER -->
             <div class="file-header">
                 🔆 [ {file_size} ] {display_filename}
             </div>
 
-            <!-- QUICK SUMMARY CARD -->
             <div class="summary-card">
                 <h3>⚡ Quick Media Summary</h3>
                 <div class="summary-grid">
@@ -209,7 +209,7 @@ async def mediainfo_route_handler(request: web.Request):
                     <div>🎞️ <b>Video Codec:</b> <span class="tag-video">{video_codec}</span></div>
                     <div>⏱️ <b>Duration:</b> <span class="tag-gen">{duration}</span></div>
                     <div>📦 <b>File Size:</b> <span class="tag-gen">{file_size}</span></div>
-                    <div>📊 <b>Bitrate:</b> <span class="tag-gen">{bitrate}</span></div>
+                    <div>📊 <b>Bitdepth:</b> <span class="tag-gen">{bitdepth}</span></div>
                     <div>🔊 <b>Audio Tracks:</b> <span class="tag-audio">{audio_str}</span></div>
                     <div>💬 <b>Subtitles:</b> <span class="tag-sub">{sub_str}</span></div>
                 </div>
