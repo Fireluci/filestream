@@ -54,19 +54,19 @@ async def mediainfo_route_handler(request: web.Request):
         path = request.match_info["path"]
         local_url = f"http://127.0.0.1:{Server.PORT}/dl/{path}"
         
-        # Execute system mediainfo command asynchronously against local stream URL
         proc = await asyncio.create_subprocess_exec(
             "mediainfo",
             local_url,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await proc.communicate()
+        stdout, _ = await proc.communicate()
         
-        if proc.returncode == 0 and stdout:
-            raw_info = stdout.decode("utf-8", errors="ignore")
-        else:
-            raw_info = "Unable to extract MediaInfo or file format not supported."
+        raw_info = stdout.decode("utf-8", errors="ignore") if proc.returncode == 0 and stdout else "Unable to extract MediaInfo."
+
+        # 1. Remove all 'Title' lines from the raw output text completely
+        lines = [line for line in raw_info.splitlines() if not line.strip().startswith("Title")]
+        cleaned_info = "\n".join(lines)
 
         html = f"""
         <!DOCTYPE html>
@@ -76,14 +76,37 @@ async def mediainfo_route_handler(request: web.Request):
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>MediaInfo Report</title>
             <style>
-                body {{ background: #121212; color: #E0E0E0; font-family: 'Courier New', Courier, monospace; padding: 20px; }}
-                h2 {{ color: #1db954; }}
-                pre {{ background: #1E1E1E; padding: 20px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; border: 1px solid #333; font-size: 14px; line-height: 1.4; }}
+                body {{
+                    background: #0d1117;
+                    color: #c9d1d9;
+                    font-family: 'Courier New', Courier, monospace;
+                    padding: 20px;
+                    margin: 0;
+                }}
+                h2 {{
+                    color: #58a6ff;
+                    border-bottom: 2px solid #30363d;
+                    padding-bottom: 10px;
+                }}
+                pre {{
+                    background: #161b22;
+                    padding: 20px;
+                    border-radius: 12px;
+                    overflow-x: auto;
+                    white-space: pre-wrap;
+                    border: 1px solid #30363d;
+                    font-size: 13px;
+                    line-height: 1.5;
+                }}
+                /* Color styling for different sections inside the text report */
+                .report-content {{
+                    color: #e6edf3;
+                }}
             </style>
         </head>
         <body>
             <h2>📄 MediaInfo Report</h2>
-            <pre>{raw_info}</pre>
+            <pre class="report-content"><code>{cleaned_info}</code></pre>
         </body>
         </html>
         """
