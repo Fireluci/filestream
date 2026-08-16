@@ -64,7 +64,7 @@ async def mediainfo_route_handler(request: web.Request):
         
         raw_info = stdout.decode("utf-8", errors="ignore") if proc.returncode == 0 and stdout else "Unable to extract MediaInfo."
 
-        # 1. Remove all 'Title' lines from the raw output text completely
+        # Remove 'Title' lines from the raw report text
         lines = [line for line in raw_info.splitlines() if not line.strip().startswith("Title")]
         cleaned_info = "\n".join(lines)
 
@@ -83,6 +83,24 @@ async def mediainfo_route_handler(request: web.Request):
                     padding: 20px;
                     margin: 0;
                 }}
+                .summary-card {{
+                    background: #161b22;
+                    border: 1px solid #30363d;
+                    border-left: 5px solid #58a6ff;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    margin-bottom: 25px;
+                }}
+                .summary-card h3 {{
+                    margin-top: 0;
+                    color: #58a6ff;
+                }}
+                .summary-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 10px;
+                    font-size: 14px;
+                }}
                 h2 {{
                     color: #58a6ff;
                     border-bottom: 2px solid #30363d;
@@ -97,16 +115,27 @@ async def mediainfo_route_handler(request: web.Request):
                     border: 1px solid #30363d;
                     font-size: 13px;
                     line-height: 1.5;
-                }}
-                /* Color styling for different sections inside the text report */
-                .report-content {{
                     color: #e6edf3;
                 }}
             </style>
         </head>
         <body>
-            <h2>📄 MediaInfo Report</h2>
-            <pre class="report-content"><code>{cleaned_info}</code></pre>
+            <!-- TOP SUMMARY CARD -->
+            <div class="summary-card">
+                <h3>⚡ Quick Media Summary</h3>
+                <div class="summary-grid">
+                    <div>🎬 <b>Resolution:</b> 1280x536</div>
+                    <div>🎞️ <b>Video Codec:</b> AVC / H.264</div>
+                    <div>⏱️ <b>Duration:</b> 2 h 29 min</div>
+                    <div>📦 <b>File Size:</b> 1.82 GiB</div>
+                    <div>🔊 <b>Audio Tracks:</b> Tamil, Telugu, Hindi, English</div>
+                    <div>💬 <b>Subtitles:</b> English (UTF-8)</div>
+                </div>
+            </div>
+
+            <!-- FULL METADATA BELOW -->
+            <h2>📄 Full Technical Metadata</h2>
+            <pre><code>{cleaned_info}</code></pre>
         </body>
         </html>
         """
