@@ -12,17 +12,6 @@ from typing import (
 )
 import re
 
-def clean_filename(file_name: str) -> str:
-    # Step 1: Match '@' followed by any word characters AND underscores, fully removing the entire handle
-    step1 = re.sub(r'@[a-zA-Z0-9_]+', '', file_name)
-    
-    # Step 2: Replace all remaining symbols, dots, and emojis with spaces, keeping only a-z, 0-9
-    step2 = re.sub(r'[^a-zA-Z0-9\s]', ' ', step1)
-    
-    # Step 3: Clean up extra multi-spaces left behind
-    cleaned_name = re.sub(r'\s+', ' ', step2).strip()
-    
-    return cleaned_name
 
 db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 
@@ -91,13 +80,20 @@ async def is_user_joined(bot, message: Message):
 
 #---------------------[ PRIVATE GEN LINK + CALLBACK ]---------------------#
 
+def clean_filename(file_name: str) -> str:
+    step1 = re.sub(r'@[a-zA-Z0-9_]+', '', file_name)
+    step2 = re.sub(r'[^a-zA-Z0-9\s]', ' ', step1)
+    cleaned_name = re.sub(r'\s+', ' ', step2).strip()
+    return cleaned_name
+
+#---------------------[ PRIVATE GEN LINK + CALLBACK ]---------------------#
+
 async def gen_link(_id):
     file_info = await db.get_file(_id)
     file_size = humanbytes(file_info['file_size'])
     raw_file_name = file_info['file_name']
     mime_type = file_info['mime_type']
 
-    # Apply the clean_filename transformation
     file_name = clean_filename(raw_file_name)
 
     page_link = f"{Server.URL}watch/{_id}"
@@ -108,16 +104,18 @@ async def gen_link(_id):
         stream_text = LANG.STREAM_TEXT.format(file_size, file_name, stream_link, page_link)
         reply_markup = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("📺 sᴛʀᴇᴀᴍ", url=page_link), InlineKeyboardButton("📥 ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
-                [InlineKeyboardButton("📮 ᴍᴇᴅɪᴀɪɴғᴏ", url=mediainfo_link)]
+                [InlineKeyboardButton("sᴛʀᴇᴀᴍ", url=page_link), InlineKeyboardButton("ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
+                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ ʀᴇᴘᴏʀᴛ", url=mediainfo_link)],
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
             ]
         )
     else:
         stream_text = LANG.STREAM_TEXT_X.format(file_size, file_name, stream_link)
         reply_markup = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("📥 ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
-                [InlineKeyboardButton("📮 ᴍᴇᴅɪᴀɪɴғᴏ", url=mediainfo_link)]
+                [InlineKeyboardButton("ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
+                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ ʀᴇᴘᴏʀᴛ", url=mediainfo_link)],
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
             ]
         )
     return reply_markup, stream_text
@@ -130,7 +128,6 @@ async def gen_linkx(m: Message, _id, name: list):
     mime_type = file_info['mime_type']
     file_size = humanbytes(file_info['file_size'])
 
-    # Apply the clean_filename transformation
     file_name = clean_filename(raw_file_name)
 
     page_link = f"{Server.URL}watch/{_id}"
@@ -142,7 +139,7 @@ async def gen_linkx(m: Message, _id, name: list):
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("sᴛʀᴇᴀᴍ", url=page_link), InlineKeyboardButton("ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
-                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ", url=mediainfo_link)]
+                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ ʀᴇᴘᴏʀᴛ", url=mediainfo_link)]
             ]
         )
     else:
@@ -150,10 +147,11 @@ async def gen_linkx(m: Message, _id, name: list):
         reply_markup = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("ᴅᴏᴡɴʟᴏᴀᴅ", url=stream_link)],
-                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ", url=mediainfo_link)]
+                [InlineKeyboardButton("📄 ᴍᴇᴅɪᴀɪɴғᴏ ʀᴇᴘᴏʀᴛ", url=mediainfo_link)]
             ]
         )
     return reply_markup, stream_text
+
 
 #---------------------[ USER BANNED ]---------------------#
 
