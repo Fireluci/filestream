@@ -57,7 +57,6 @@ async def mediainfo_route_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         
-        # Check if MediaInfo is already cached in memory for instant loading
         if path in mediainfo_cache:
             raw_info = mediainfo_cache[path]
         else:
@@ -73,7 +72,7 @@ async def mediainfo_route_handler(request: web.Request):
             
             if proc.returncode == 0 and stdout:
                 raw_info = stdout.decode("utf-8", errors="ignore")
-                mediainfo_cache[path] = raw_info  # Save to cache
+                mediainfo_cache[path] = raw_info
             else:
                 raw_info = "Unable to extract MediaInfo."
 
@@ -104,7 +103,6 @@ async def mediainfo_route_handler(request: web.Request):
         video_block = video_block_match.group(1) if video_block_match else raw_info
         video_codec = extract(r"Format\s*:\s*(.*)", video_block, "AVC / HEVC")
 
-        # Extract Bit Depth
         raw_bit_depth = extract(r"Bit depth\s*:\s*(.*)", video_block, "")
         bit_depth = raw_bit_depth.replace("bits", "").replace("bit", "").strip()
         bit_depth = f"{bit_depth}-bit" if bit_depth.isdigit() else "N/A"
@@ -197,8 +195,12 @@ async def mediainfo_route_handler(request: web.Request):
                     border: 1px solid #30363d;
                     font-size: 13px;
                     line-height: 1.5;
-                    color: #e6edf3;
                 }}
+                /* Color coding for the full metadata report */
+                .sec-general {{ color: #58a6ff; font-weight: bold; }} /* Blue */
+                .sec-video {{ color: #3fb950; font-weight: bold; }}   /* Green */
+                .sec-audio {{ color: #f0883e; font-weight: bold; }}   /* Orange */
+                .sec-sub {{ color: #bc8cff; font-weight: bold; }}     /* Purple */
             </style>
         </head>
         <body>
@@ -220,7 +222,28 @@ async def mediainfo_route_handler(request: web.Request):
             </div>
 
             <h2>📄 Full Technical Metadata</h2>
-            <pre><code>{cleaned_info}</code></pre>
+            <pre><code id="raw-report">{cleaned_info}</code></pre>
+
+            <script>
+                // Automatically color-code lines in the full metadata report based on section
+                document.addEventListener("DOMContentLoaded", function() {{
+                    const codeEl = document.getElementById("raw-report");
+                    let lines = codeEl.innerHTML.split("\\n");
+                    let currentClass = "sec-general";
+
+                    let coloredLines = lines.map(line => {{
+                        let trimmed = line.trim();
+                        if (trimmed === "General") currentClass = "sec-general";
+                        else if (trimmed === "Video") currentClass = "sec-video";
+                        else if (trimmed.startsWith("Audio")) currentClass = "sec-audio";
+                        else if (trimmed.startsWith("Subtitle")) currentClass = "sec-sub";
+
+                        return `<span class="${{currentClass}}">${{line}}</span>`;
+                    }});
+
+                    codeEl.innerHTML = coloredLines.join("\\n");
+                }});
+            </script>
         </body>
         </html>
         """
