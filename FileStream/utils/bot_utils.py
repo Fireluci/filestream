@@ -86,6 +86,15 @@ def clean_filename(file_name: str) -> str:
     cleaned_name = re.sub(r'\s+', ' ', step2).strip()
     return cleaned_name
 
+def get_secure_base_url():
+    """Forces HTTPS for all external user-facing links regardless of config"""
+    url = getattr(Server, 'URL', "https://filestream-isn7.onrender.com/")
+    if url.startswith("http://"):
+        url = url.replace("http://", "https://", 1)
+    if not url.endswith("/"):
+        url += "/"
+    return url
+
 #---------------------[ PRIVATE GEN LINK + CALLBACK ]---------------------#
 
 async def gen_link(_id):
@@ -96,9 +105,10 @@ async def gen_link(_id):
 
     file_name = clean_filename(raw_file_name)
 
-    page_link = f"{Server.URL}watch/{_id}"
-    stream_link = f"{Server.URL}dl/{_id}"
-    mediainfo_link = f"{Server.URL}mediainfo/{_id}"
+    base_url = get_secure_base_url()
+    page_link = f"{base_url}watch/{_id}"
+    stream_link = f"{base_url}dl/{_id}"
+    mediainfo_link = f"{base_url}mediainfo/{_id}"
 
     if "video" in mime_type:
         stream_text = LANG.STREAM_TEXT.format(file_size, file_name, stream_link, page_link)
@@ -130,9 +140,10 @@ async def gen_linkx(m: Message, _id, name: list):
 
     file_name = clean_filename(raw_file_name)
 
-    page_link = f"{Server.URL}watch/{_id}"
-    stream_link = f"{Server.URL}dl/{_id}"
-    mediainfo_link = f"{Server.URL}mediainfo/{_id}"
+    base_url = get_secure_base_url()
+    page_link = f"{base_url}watch/{_id}"
+    stream_link = f"{base_url}dl/{_id}"
+    mediainfo_link = f"{base_url}mediainfo/{_id}"
 
     if "video" in mime_type:
         stream_text = LANG.STREAM_TEXT.format(file_size, file_name, stream_link, page_link)
@@ -151,7 +162,6 @@ async def gen_linkx(m: Message, _id, name: list):
             ]
         )
     return reply_markup, stream_text
-
 
 #---------------------[ USER BANNED ]---------------------#
 
