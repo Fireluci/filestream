@@ -49,7 +49,7 @@ async def watch_handler(request: web.Request):
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
 
-# Add this cache dictionary near the top of your file with your other caches (like class_cache)
+# Cache dictionary for instant subsequent loads
 mediainfo_cache = {}
 
 @routes.get("/mediainfo/{path}", allow_head=True)
@@ -95,7 +95,6 @@ async def mediainfo_route_handler(request: web.Request):
 
         file_size = extract(r"File size\s*:\s*(.*)", raw_info)
         duration = extract(r"Duration\s*:\s*(.*)", raw_info)
-        bitrate = extract(r"Overall bit rate\s*:\s*(.*)", raw_info)
         
         v_width = extract(r"Width\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
         v_height = extract(r"Height\s*:\s*([\d\s]+pixels)", raw_info).replace(" ", "").replace("pixels", "")
@@ -104,6 +103,11 @@ async def mediainfo_route_handler(request: web.Request):
         video_block_match = re.search(r"Video\n(.*?)(?=\n\n|\nAudio|\nSubtitle|\nText|\Z)", raw_info, re.DOTALL)
         video_block = video_block_match.group(1) if video_block_match else raw_info
         video_codec = extract(r"Format\s*:\s*(.*)", video_block, "AVC / HEVC")
+
+        # Extract Bit Depth
+        raw_bit_depth = extract(r"Bit depth\s*:\s*(.*)", video_block, "")
+        bit_depth = raw_bit_depth.replace("bits", "").replace("bit", "").strip()
+        bit_depth = f"{bit_depth}-bit" if bit_depth.isdigit() else "N/A"
 
         audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
         if not audio_langs:
@@ -207,9 +211,9 @@ async def mediainfo_route_handler(request: web.Request):
                 <div class="summary-grid">
                     <div>🎬 <b>Resolution:</b> <span class="tag-video">{resolution}</span></div>
                     <div>🎞️ <b>Video Codec:</b> <span class="tag-video">{video_codec}</span></div>
+                    <div>🎨 <b>Bit Depth:</b> <span class="tag-video">{bit_depth}</span></div>
                     <div>⏱️ <b>Duration:</b> <span class="tag-gen">{duration}</span></div>
                     <div>📦 <b>File Size:</b> <span class="tag-gen">{file_size}</span></div>
-                    <div>📊 <b>Bitdepth:</b> <span class="tag-gen">{bitdepth}</span></div>
                     <div>🔊 <b>Audio Tracks:</b> <span class="tag-audio">{audio_str}</span></div>
                     <div>💬 <b>Subtitles:</b> <span class="tag-sub">{sub_str}</span></div>
                 </div>
