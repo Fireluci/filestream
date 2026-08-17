@@ -80,7 +80,6 @@ async def mediainfo_route_handler(request: web.Request):
         lines = []
         for line in raw_info.splitlines():
             stripped = line.strip()
-            # Remove Title, Movie name, Writing application, and Writing library
             if (stripped.startswith("Title") or 
                 stripped.startswith("Movie name") or 
                 stripped.startswith("Writing application") or 
@@ -104,8 +103,7 @@ async def mediainfo_route_handler(request: web.Request):
         
         if v_width_str.isdigit() and v_height_str.isdigit():
             w, h = int(v_width_str), int(v_height_str)
-            # Swap if vertical/shorts format (height > width) is preferred as WxH or HxW based on user request
-            resolution = f"{w}x{h}" if w >= h else f"{w}x{h}"
+            resolution = f"{w}x{h}"
         else:
             resolution = "N/A"
         
@@ -117,18 +115,7 @@ async def mediainfo_route_handler(request: web.Request):
         bit_depth = raw_bit_depth.replace("bits", "").replace("bit", "").strip()
         bit_depth = f"{bit_depth}-bit" if bit_depth.isdigit() else "N/A"
 
-        audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        if not audio_langs:
-            audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info)
-        valid_audio = [l.strip() for l in audio_langs if l.strip().lower() not in ['default', 'forced', 'no']]
-        audio_str = ", ".join(dict.fromkeys(valid_audio)) if valid_audio else "None"
-
-        sub_langs = re.findall(r"Subtitle\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        if not sub_langs:
-            sub_langs = re.findall(r"Text\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        valid_subs = [l.strip() for l in sub_langs if l.strip().lower() not in ['default', 'forced', 'no']]
-        sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
-
+        # Fetch Cleaned File Name from Database for header display
         display_filename = "Media File"
         try:
             from FileStream.utils.database import Database
@@ -143,6 +130,19 @@ async def mediainfo_route_handler(request: web.Request):
         except Exception:
             pass
 
+        # Strict MediaInfo language extraction (No guessing)
+        audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        if not audio_langs:
+            audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info)
+        valid_audio = [l.strip() for l in audio_langs if l.strip().lower() not in ['default', 'forced', 'no']]
+        audio_str = ", ".join(dict.fromkeys(valid_audio)) if valid_audio else "None"
+
+        sub_langs = re.findall(r"Subtitle\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        if not sub_langs:
+            sub_langs = re.findall(r"Text\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
+        valid_subs = [l.strip() for l in sub_langs if l.strip().lower() not in ['default', 'forced', 'no']]
+        sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
+
         html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -155,9 +155,9 @@ async def mediainfo_route_handler(request: web.Request):
                     background: #0d1117;
                     color: #c9d1d9;
                     font-family: 'Courier New', Courier, monospace;
-                    padding: 20px;
+                    padding: 15px;
                     margin: 0;
-                    word-break: break-word;
+                    box-sizing: border-box;
                 }}
                 .file-header {{
                     background: #161b22;
@@ -165,15 +165,16 @@ async def mediainfo_route_handler(request: web.Request):
                     padding: 12px 18px;
                     border-radius: 8px;
                     margin-bottom: 15px;
-                    font-size: 15px;
-                    color: #ff7b72; /* Distinct color for file name */
+                    font-size: 14px;
+                    color: #ff7b72;
                     font-weight: bold;
+                    word-break: break-all;
                 }}
                 .summary-card {{
                     background: #161b22;
                     border: 1px solid #30363d;
                     border-left: 5px solid #58a6ff;
-                    padding: 20px;
+                    padding: 15px;
                     border-radius: 8px;
                     margin-bottom: 25px;
                 }}
@@ -183,9 +184,9 @@ async def mediainfo_route_handler(request: web.Request):
                 }}
                 .summary-grid {{
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                    gap: 12px;
-                    font-size: 14px;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 10px;
+                    font-size: 13px;
                 }}
                 .tag-video {{ color: #3fb950; font-weight: bold; }}
                 .tag-audio {{ color: #f0883e; font-weight: bold; }}
@@ -195,25 +196,29 @@ async def mediainfo_route_handler(request: web.Request):
                 h2 {{
                     color: #58a6ff;
                     border-bottom: 2px solid #30363d;
-                    padding-bottom: 10px;
+                    padding-bottom: 8px;
+                    font-size: 18px;
                 }}
                 pre {{
                     background: #161b22;
-                    padding: 20px;
-                    border-radius: 12px;
+                    padding: 15px;
+                    border-radius: 10px;
                     overflow-x: auto;
-                    white-space: pre; /* Prevents awkward line-wrapping breaking colons */
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
                     border: 1px solid #30363d;
-                    font-size: 13px;
-                    line-height: 1.5;
+                    font-size: 12px;
+                    line-height: 1.4;
                 }}
-                /* Uniform, bigger font and color for section names */
                 .sec-header {{
                     color: #79c0ff;
-                    font-size: 16px;
+                    font-size: 15px;
                     font-weight: bold;
-                    display: inline-block;
-                    margin-top: 5px;
+                    display: block;
+                    margin-top: 15px;
+                    margin-bottom: 5px;
+                    border-bottom: 1px dashed #30363d;
+                    padding-bottom: 3px;
                 }}
                 .sec-general {{ color: #58a6ff; }}
                 .sec-video {{ color: #3fb950; }}
