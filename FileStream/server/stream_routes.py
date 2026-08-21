@@ -130,18 +130,21 @@ async def mediainfo_route_handler(request: web.Request):
         except Exception:
             pass
 
-        # Strict MediaInfo language extraction (No guessing)
+        # Strict Audio Language Extraction
         audio_langs = re.findall(r"Audio\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
         if not audio_langs:
             audio_langs = re.findall(r"Language\s*:\s*(.*)", raw_info)
         valid_audio = [l.strip() for l in audio_langs if l.strip().lower() not in ['default', 'forced', 'no']]
         audio_str = ", ".join(dict.fromkeys(valid_audio)) if valid_audio else "None"
 
-        sub_langs = re.findall(r"Subtitle\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        if not sub_langs:
-            sub_langs = re.findall(r"Text\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info)
-        valid_subs = [l.strip() for l in sub_langs if l.strip().lower() not in ['default', 'forced', 'no']]
-        sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
+        # Strict Subtitle Track and Language Detection
+        sub_blocks = re.findall(r"(?:Subtitle|Text)\s*#?\d*\n(?:[^\n]+\n)*?.*?Language\s*:\s*(.*)", raw_info, re.IGNORECASE)
+        if not sub_blocks:
+            sub_count = len(re.findall(r"\b(Subtitle|Text)\b", raw_info))
+            sub_str = "Present (No Language)" if sub_count > 0 else "None"
+        else:
+            valid_subs = [l.strip() for l in sub_blocks if l.strip().lower() not in ['default', 'forced', 'no']]
+            sub_str = ", ".join(dict.fromkeys(valid_subs)) if valid_subs else "None"
 
         html = f"""
         <!DOCTYPE html>
