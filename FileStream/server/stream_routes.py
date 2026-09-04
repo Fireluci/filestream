@@ -294,7 +294,7 @@ async def dl_handler(request: web.Request):
         raise web.HTTPForbidden(text=e.message)
     except FIleNotFound as e:
         raise web.HTTPNotFound(text=e.message)
-    except (AttributeError, BadStatusLine, ConnectionResetError, asyncio.CancelledError):
+    except (AttributeError, BadStatusLine, ConnectionResetError, BrokenPipeError, asyncio.CancelledError):
         pass
     except Exception as e:
         traceback.print_exc()
@@ -395,12 +395,18 @@ async def media_streamer(request: web.Request, db_id: str):
 
     try:
         async for chunk in body:
+            if request.transport is None or request.transport.is_closing():
+                logging.info(f"Client disconnected, stopping stream for {file_name}")
+                break
             await response.write(chunk)
     except (asyncio.CancelledError, ConnectionResetError, BrokenPipeError):
         logging.info(f"Stream aborted: client closed connection for {file_name}")
     except Exception as e:
         logging.error(f"Error while writing response chunk for {file_name}: {e}")
     finally:
-        await response.write_eof()
+        try:
+            await response.write_eof()
+        except (ConnectionResetError, BrokenPipeError, RuntimeError):
+            pass
 
     return response
