@@ -68,8 +68,16 @@ async def mediainfo_route_handler(request: web.Request):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, _ = await proc.communicate()
-            
+
+            try:
+                stdout, _ = await asyncio.wait_for(
+                    proc.communicate(), timeout=20
+                )
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()
+                stdout = b""
+
             if proc.returncode == 0 and stdout:
                 raw_info = stdout.decode("utf-8", errors="ignore")
                 mediainfo_cache[path] = raw_info
