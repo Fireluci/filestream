@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 import jinja2
 import urllib.parse
@@ -16,9 +17,17 @@ async def render_page(db_id):
         template_file = "FileStream/template/play.html"
     else:
         template_file = "FileStream/template/dl.html"
-        async with aiohttp.ClientSession() as s:
-            async with s.get(src) as u:
-                file_size = humanbytes(int(u.headers.get('Content-Length')))
+        try:
+            timeout = aiohttp.ClientTimeout(total=15)
+            async with aiohttp.ClientSession(timeout=timeout) as s:
+                async with s.get(src) as u:
+                    content_length = u.headers.get('Content-Length')
+                    if content_length:
+                        file_size = humanbytes(int(content_length))
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            # /dl is stuck or erroring — keep the DB-reported size
+            # instead of hanging the whole /watch page on it.
+            pass
 
     with open(template_file) as f:
         template = jinja2.Template(f.read())
