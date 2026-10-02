@@ -316,13 +316,39 @@ class ByteStreamer:
                 file_id
             )
 
-            r = await media_session.invoke(
-                raw.functions.upload.GetFile(
-                    location=location,
-                    offset=offset,
-                    limit=chunk_size,
-                ),
-            )
+            async def fetch(off):
+                nonlocal media_session
+                try:
+                    return await media_session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location,
+                            offset=off,
+                            limit=chunk_size,
+                        ),
+                    )
+                except Exception as e:
+                    # A cached media session can go stale if Telegram drops it
+                    # server-side after sitting idle for a while. Left as-is,
+                    # every future request on this DC would keep failing until
+                    # the bot is restarted — so discard it and get a fresh one.
+                    logging.warning(
+                        f"Media session for DC {file_id.dc_id} looked dead "
+                        f"({e}); recreating it."
+                    )
+                    client.media_sessions.pop(file_id.dc_id, None)
+                    media_session = await self.generate_media_session(
+                        client,
+                        file_id,
+                    )
+                    return await media_session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location,
+                            offset=off,
+                            limit=chunk_size,
+                        ),
+                    )
+
+            r = await fetch(offset)
 
             if isinstance(
                 r,
@@ -364,13 +390,7 @@ class ByteStreamer:
                     if current_part > part_count:
                         break
 
-                    r = await media_session.invoke(
-                        raw.functions.upload.GetFile(
-                            location=location,
-                            offset=offset,
-                            limit=chunk_size,
-                        ),
-                    )
+                    r = await fetch(offset)
 
         except (
             asyncio.CancelledError,
