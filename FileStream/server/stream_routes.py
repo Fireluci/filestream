@@ -337,11 +337,15 @@ async def media_streamer(request: web.Request, db_id: str):
     try:
         file_id = await tg_connect.get_file_properties(db_id, multi_clients)
     except Exception as e:
-        logging.warning(f"Encountered error with client {index}, clearing cache and refreshing: {e}")
-        if faster_client in class_cache:
-            del class_cache[faster_client]
-        tg_connect = utils.ByteStreamer(faster_client)
-        class_cache[faster_client] = tg_connect
+        # NOTE: previously this created a brand new ByteStreamer here. Every
+        # ByteStreamer spawns its own background clean_cache() task that runs
+        # forever, and the old one was never cancelled — so every streaming
+        # error leaked one more background task permanently. That's the slow
+        # accumulation behind the "bot turns into a zombie after a few days"
+        # symptom. Reusing the same instance and just clearing its cache
+        # fixes the retry without leaking anything.
+        logging.warning(f"Encountered error with client {index}, clearing cache and retrying: {e}")
+        tg_connect.cached_file_ids.clear()
         file_id = await tg_connect.get_file_properties(db_id, multi_clients)
         
     file_size = file_id.file_size
