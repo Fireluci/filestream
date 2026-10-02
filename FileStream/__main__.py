@@ -1,3 +1,4 @@
+import os
 import sys
 import asyncio
 import logging
@@ -102,6 +103,8 @@ async def start_services():
     print(" URL =>>", Server.URL)
     print("------------------------------------------------------------------")
 
+    asyncio.create_task(scheduled_restart())
+
     await idle()
 
 
@@ -114,6 +117,29 @@ async def cleanup():
 
     try: await FileStream.stop()
     except: pass
+
+
+# --------------------------------------------------------------------
+# SCHEDULED RESTART (every 12 hours)
+# --------------------------------------------------------------------
+# A full process restart clears everything in memory — the Pyrogram client,
+# every cached media session, every cached file ID, any leaked background
+# task — regardless of what else might slowly accumulate over time. This is
+# a safety net on top of actual bug fixes, not a substitute for them.
+RESTART_INTERVAL_SECONDS = 12 * 60 * 60
+
+async def scheduled_restart():
+    await asyncio.sleep(RESTART_INTERVAL_SECONDS)
+    logging.info("[Restart] 12-hour scheduled restart triggered.")
+    try:
+        await cleanup()
+    except Exception:
+        logging.error("[Restart] Cleanup before restart failed, restarting anyway.")
+    # Re-exec python -m FileStream in place: same process, same container,
+    # fresh interpreter state. Hardcoded rather than reusing sys.argv so the
+    # restart always launches the same way regardless of how this process
+    # was originally started.
+    os.execv(sys.executable, [sys.executable, "-m", "FileStream"])
 
 
 # --------------------------------------------------------------------
